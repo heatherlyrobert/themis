@@ -335,7 +335,10 @@ CONF__clear             (void)
    my.e_mode          = -1;
    my.type            = '·';
    strlcpy (my.source, "" , LEN_HUND);
+   my.e_major         = -1;
+   my.e_minor         = -1;
    my.exists = '-';
+   stat ("/nowheresville", &my.curr_stat);
    strlcpy (g_check, "·   ······· ·   ·········· ·   ·········· ·   ·········· ·   ·", LEN_HUND);
    DEBUG_CONF   yLOG_sexit   (__FUNCTION__);
    return 0;
@@ -580,21 +583,40 @@ CONF__parse             (char a_pos, cchar a_recd [LEN_RECD])
    }
    /*---(finalize)-----------------------*/
    g_check [x_sum] = '!';
-   switch (my.abbr) {
-   case 'a' :  if (strncmp (g_check, "a   d------", 11) == 0)  g_check [x_sum] = 'y';   break;
-   case 'b' :  if (strncmp (g_check, "b   dtogp-s", 11) == 0)  g_check [x_sum] = 'y';   break;
-   case 'c' :  if (strncmp (g_check, "c   dtogp-s", 11) == 0)  g_check [x_sum] = 'y';   break;
-   case 'd' :  if (strncmp (g_check, "d   dtogp--", 11) == 0)  g_check [x_sum] = 'y';   break;
-   case 'e' :  if (strncmp (g_check, "e   -------", 11) == 0)  g_check [x_sum] = 'y';   break;
-   case 'f' :  if (strncmp (g_check, "f   dtogp--", 11) == 0)  g_check [x_sum] = 'y';   break;
-   case 'g' :  if (strncmp (g_check, "g   dt-gp--", 11) == 0)  g_check [x_sum] = 'y';   break;
-   case 'h' :  if (strncmp (g_check, "h   dtogpts", 11) == 0)  g_check [x_sum] = 'y';   break;
-   case 'i' :  if (strncmp (g_check, "i   dtogp--", 11) == 0)  g_check [x_sum] = 'y';   break;
-   case 'm' :  if (strncmp (g_check, "m   dt-----", 11) == 0)  g_check [x_sum] = 'y';   break;
-   case 'p' :  if (strncmp (g_check, "p   dtogp--", 11) == 0)  g_check [x_sum] = 'y';   break;
-   case 's' :  if (strncmp (g_check, "s   dt---ts", 11) == 0)  g_check [x_sum] = 'y';   break;
-   case 'u' :  if (strncmp (g_check, "u   dto-p--", 11) == 0)  g_check [x_sum] = 'y';   break;
+   /*---(additions)---------*/
+   if (strchr ("a·", my.act) != NULL) {
+      switch (my.abbr) {
+      case 'a' :  if (strncmp (g_check, "a   d------", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'b' :  if (strncmp (g_check, "b   dtogp-s", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'c' :  if (strncmp (g_check, "c   dtogp-s", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'd' :  if (strncmp (g_check, "d   dtogp--", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'e' :  if (strncmp (g_check, "e   -------", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'f' :  if (strncmp (g_check, "f   dtogp--", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'g' :  if (strncmp (g_check, "g   dt-gp--", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'h' :  if (strncmp (g_check, "h   dt---ts", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'i' :  if (strncmp (g_check, "i   dtogp--", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'm' :  if (strncmp (g_check, "m   dt-----", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'p' :  if (strncmp (g_check, "p   dtogp--", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 's' :  if (strncmp (g_check, "s   dt---ts", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'u' :  if (strncmp (g_check, "u   dto-p--", 11) == 0)  g_check [x_sum] = 'y';   break;
+      }
    }
+   /*---(removals)----------*/
+   if (my.act == 'x') {
+      switch (my.abbr) {
+      case 'b' :  if (strncmp (g_check, "b   dt-----", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'c' :  if (strncmp (g_check, "c   dt-----", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'd' :  if (strncmp (g_check, "d   dt-----", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'f' :  if (strncmp (g_check, "f   dt-----", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'g' :  if (strncmp (g_check, "g   dt-----", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'h' :  if (strncmp (g_check, "h   dt-----", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'i' :  if (strncmp (g_check, "i   dt-----", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'p' :  if (strncmp (g_check, "p   dt-----", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 's' :  if (strncmp (g_check, "s   dt-----", 11) == 0)  g_check [x_sum] = 'y';   break;
+      case 'u' :  if (strncmp (g_check, "u   dt-----", 11) == 0)  g_check [x_sum] = 'y';   break;
+      }
+   }
+   /*---(handle outcome------------------*/
    DEBUG_CONF   yLOG_char    ("check"     , g_check [x_sum]);
    --rce;  if (g_check [x_sum] != 'y') {
       DEBUG_CONF   yLOG_exit    (__FUNCTION__);
@@ -690,6 +712,7 @@ CONF_driver             (cchar a_name [LEN_PATH])
    char        rce         =  -10;
    int         rc          =    0;
    char        x_recd      [LEN_RECD];
+   int         n           =   -1;
    /*---(header)-------------------------*/
    DEBUG_CONF   yLOG_enter   (__FUNCTION__);
    /*---(open file)----------------------*/
@@ -726,6 +749,8 @@ CONF_driver             (cchar a_name [LEN_PATH])
       if (my.abbr == TYPE_AREA)   CONF__focus (my.abbr, my.desc);
       if (s_focus == '-')         continue;
       /*---(call handler)----------------*/
+      ++n;
+      if (n % 5 == 0)  printf ("\n");
       strldchg (x_recd, '', '§', LEN_RECD);
       /*> printf ("å%.198sæ\n", x_recd);                                              <*/
       printf ("å%.112sæ", x_recd);

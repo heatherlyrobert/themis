@@ -117,6 +117,9 @@ CHECK__exist             (char a_pos, cchar a_name [LEN_HUND])
    int         l           =    0;
    /*---(header)-------------------------*/
    DEBUG_PROG   yLOG_enter   (__FUNCTION__);
+   /*---(default)------------------------*/
+   my.exists = '-';
+   stat ("/nowheresville", &my.curr_stat);
    /*---(defense)------------------------*/
    DEBUG_PROG   yLOG_info    ("g_check"   , g_check);
    --rce;  if (a_pos < 0 || a_pos >= strlen (g_check)) {
@@ -372,20 +375,6 @@ CHECK__owner            (char a_pos, cchar a_owner [LEN_TERSE])
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
    }
-   /*---(missing file)--------------------*/
-   --rce;  if (my.exists != 'y') {
-      g_check [a_pos] = '-';
-      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
-      return rce;
-   }
-   /*---(look up actual)-----------------*/
-   p = getpwuid (my.curr_stat.st_uid);
-   DEBUG_PROG   yLOG_point   ("p"         , p);
-   --rce;  if (p == NULL) {
-      g_check [a_pos] = 'F';
-      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
-      return rce;
-   }
    /*===[[ NO-TOUCH ]]===================*/
    if (strcmp (a_owner, "tty_root") == 0) {   /* specific to tty devices     */
       g_check [a_pos] = '!';
@@ -402,6 +391,22 @@ CHECK__owner            (char a_pos, cchar a_owner [LEN_TERSE])
    }
    x_uid = p->pw_uid;
    DEBUG_PROG   yLOG_value   ("x_uid"     , x_uid);
+   /*---(save to global);-----------------*/
+   my.e_uid  = x_uid;
+   /*---(missing file)--------------------*/
+   --rce;  if (my.exists != 'y') {
+      g_check [a_pos] = '-';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(look up actual)-----------------*/
+   p = getpwuid (my.curr_stat.st_uid);
+   DEBUG_PROG   yLOG_point   ("p"         , p);
+   --rce;  if (p == NULL) {
+      g_check [a_pos] = 'F';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
    /*---(test match)---------------------*/
    --rce;  if (my.curr_stat.st_uid != x_uid) {
       g_check [a_pos] = '-';
@@ -409,7 +414,6 @@ CHECK__owner            (char a_pos, cchar a_owner [LEN_TERSE])
       return rce;
    }
    /*---(save-back)----------------------*/
-   my.e_uid        = x_uid;
    g_check [a_pos] = 'o';
    /*---(complete)-----------------------*/
    DEBUG_CONF   yLOG_exit    (__FUNCTION__);
@@ -447,6 +451,18 @@ CHECK__group            (char a_pos, cchar a_group [LEN_TERSE])
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
    }
+   /*---(look up group)------------------*/
+   g = getgrnam (a_group);
+   DEBUG_PROG   yLOG_point   ("g"         , g);
+   --rce;  if (g == NULL) {
+      g_check [a_pos] = '?';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   x_gid = g->gr_gid;
+   DEBUG_PROG   yLOG_value   ("x_gid"     , x_gid);
+   /*---(save to global);-----------------*/
+   my.e_gid  = x_gid;
    /*---(missing file)--------------------*/
    --rce;  if (my.exists != 'y') {
       g_check [a_pos] = '-';
@@ -461,16 +477,6 @@ CHECK__group            (char a_pos, cchar a_group [LEN_TERSE])
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
    }
-   /*---(look up group)------------------*/
-   g = getgrnam (a_group);
-   DEBUG_PROG   yLOG_point   ("g"         , g);
-   --rce;  if (g == NULL) {
-      g_check [a_pos] = '?';
-      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
-      return rce;
-   }
-   x_gid = g->gr_gid;
-   DEBUG_PROG   yLOG_value   ("x_gid"     , x_gid);
    /*---(test match)---------------------*/
    --rce;  if (my.curr_stat.st_gid != x_gid) {
       g_check [a_pos] = '-';
@@ -478,7 +484,6 @@ CHECK__group            (char a_pos, cchar a_group [LEN_TERSE])
       return rce;
    }
    /*---(save-back)----------------------*/
-   my.e_gid        = x_gid;
    g_check [a_pos] = 'g';
    /*---(complete)-----------------------*/
    DEBUG_CONF   yLOG_exit    (__FUNCTION__);
@@ -529,6 +534,8 @@ CHECK__perms            (char a_pos, cchar a_perms [LEN_TERSE])
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
    }
+   /*---(save to global);-----------------*/
+   my.e_mode  = x_expect;
    /*---(missing file)--------------------*/
    --rce;  if (my.exists != 'y') {
       g_check [a_pos] = '-';
@@ -546,6 +553,65 @@ CHECK__perms            (char a_pos, cchar a_perms [LEN_TERSE])
    /*---(save-back)----------------------*/
    my.e_mode       = x_expect;
    g_check [a_pos] = 'p';
+   /*---(complete)-----------------------*/
+   DEBUG_CONF   yLOG_exit    (__FUNCTION__);
+   return 0;
+}
+
+char
+CHECK__link             (char a_pos, char a_chk, cchar a_name [LEN_HUND], cchar a_source [LEN_HUND])
+{
+   /*---(locals)-----------+-----+-----+-*/
+   char        rce         =  -10;
+   char        rc          =    0;
+   int         l           =    0;
+   char        t           [LEN_HUND]  = "";
+   /*---(print header)-------------------*/
+   DEBUG_CONF   yLOG_enter   (__FUNCTION__);
+   /*---(defense)------------------------*/
+   DEBUG_PROG   yLOG_info    ("g_check"   , g_check);
+   --rce;  if (a_pos < 0 || a_pos >= strlen (g_check)) {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   DEBUG_PROG   yLOG_point   ("a_name"    , a_name);
+   --rce;  if (a_name   == NULL) {
+      g_check [a_pos] = '£';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   DEBUG_PROG   yLOG_info    ("a_name"    , a_name);
+   DEBUG_PROG   yLOG_point   ("a_source"  , a_source);
+   --rce;  if (a_source == NULL) {
+      g_check [a_pos] = '£';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   DEBUG_PROG   yLOG_info    ("a_source"  , a_source);
+   /*---(check for missing target)-------*/
+   if (g_check [a_chk] == '-') {
+      g_check [a_pos] = '-';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(check link)---------------------*/
+   l  =  readlink (a_name, t, 490);
+   DEBUG_PROG   yLOG_value   ("l"         , l);
+   --rce;  if (l <= 0) {
+      g_check [a_pos] = '!';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   t [l] = '\0';
+   DEBUG_PROG   yLOG_info    ("t"         , t);
+   /*---(check link)---------------------*/
+   --rce;  if (strcmp (t, a_source) != 0) {
+      g_check [a_pos] = '-';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(save-back)----------------------*/
+   g_check [a_pos] = 'l';
    /*---(complete)-----------------------*/
    DEBUG_CONF   yLOG_exit    (__FUNCTION__);
    return 0;
@@ -633,6 +699,9 @@ CHECK__nodes            (char a_pos, cchar a_source [LEN_HUND])
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
    }
+   /*---(save to global);-----------------*/
+   my.e_major = x_emajor;
+   my.e_minor = x_eminor;
    /*---(missing file)--------------------*/
    --rce;  if (my.exists != 'y') {
       g_check [a_pos] = '-';
@@ -879,10 +948,12 @@ CHECK__driver      (char a_abbr, char a_pass, cchar a_name [LEN_HUND], cchar a_o
    char        n           =    0;
    char        x_nosource  =  '-';
    char        x_twaddle   =  '-';
+   char        x_exist     =  '-';
    char        x_save      =  '-';
    char        x_temp      =  '-';
    char        x_type      =  '-';
    char        x_key       [LEN_LABEL] = "";
+   char        x_2nd       [LEN_LABEL] = "";
    char        x_actual    [LEN_LABEL] = "";
    /*---(print header)-------------------*/
    DEBUG_CONF   yLOG_enter   (__FUNCTION__);
@@ -913,6 +984,7 @@ CHECK__driver      (char a_abbr, char a_pass, cchar a_name [LEN_HUND], cchar a_o
       /*---(common)----------------------*/
       rc = CHECK__exist (++n, a_name);
       DEBUG_CONF   yLOG_value   ("exist"     , rc);
+      x_exist = g_check [n];
       rc = CHECK__type  (++n, a_abbr);
       DEBUG_CONF   yLOG_value   ("type"      , rc);
       x_save = g_check [n];
@@ -938,6 +1010,8 @@ CHECK__driver      (char a_abbr, char a_pass, cchar a_name [LEN_HUND], cchar a_o
             rc = CHECK__type  (++n, a_type);
             DEBUG_CONF   yLOG_value   ("type"      , rc);
             x_type = g_check [n];
+            rc = CHECK__link  (++n, x_pos + 2, a_name, a_source);
+            DEBUG_CONF   yLOG_value   ("link"      , rc);
          } else {
             x_twaddle = 'y';
          }
@@ -956,7 +1030,10 @@ CHECK__driver      (char a_abbr, char a_pass, cchar a_name [LEN_HUND], cchar a_o
    x_temp = a_abbr;
    if (x_temp == 'f')  x_temp = 'r';
    if (a_type == 'f')  a_type = 'r';
-   if      (a_abbr == 's')                  sprintf (x_key, "nes´ne%c···", a_type);
+   if      (a_abbr == 's') {
+      sprintf (x_key, "nes´ne%cl··", a_type);
+      sprintf (x_2nd, "n--´ne%c-··", a_type);
+   }
    else if (strchr ("bc", a_abbr) != NULL)  sprintf (x_key, "ne%cogp´jn·", x_temp);
    else                                     sprintf (x_key, "ne%cogp····", x_temp);
    DEBUG_CONF   yLOG_info    ("x_key"     , x_key);
@@ -964,6 +1041,7 @@ CHECK__driver      (char a_abbr, char a_pass, cchar a_name [LEN_HUND], cchar a_o
    /*---(judge)--------------------------*/
    strlcpy (x_actual, g_check + x_pos, 11);
    if      (strncmp (x_actual, x_key, LEN_TERSE) == 0)  g_check [x_sum] = 'y';
+   else if (strncmp (x_actual, x_2nd, LEN_TERSE) == 0)  g_check [x_sum] = ' ';
    else if (strchr  (x_actual, '£') != NULL)            g_check [x_sum] = '°';
    else if (strchr  (x_actual, '­') != NULL)            g_check [x_sum] = '°';
    else if (strchr  (x_actual, '?') != NULL)            g_check [x_sum] = '°';

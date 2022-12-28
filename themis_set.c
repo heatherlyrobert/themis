@@ -55,11 +55,127 @@ char        g_rcs       = 0;
 #define     MAX_STR     500
 
 
-
-
+char
+SET__exist         (char a_pos, char a_chk)
+{
+   /*---(locals)-----------+-----+-----+-*/
+   char        rce         =  -10;
+   char        rc          =    0;
+   char        x_name      =  '·';
+   char        x_chk       =  '·';
+   /*---(print header)-------------------*/
+   DEBUG_CONF   yLOG_enter   (__FUNCTION__);
+   /*---(quick-out)----------------------*/
+   DEBUG_PROG   yLOG_char    ("my.act"    , my.act);
+   --rce;  if (my.act != 'a') {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(defense)------------------------*/
+   DEBUG_PROG   yLOG_info    ("g_check"   , g_check);
+   DEBUG_PROG   yLOG_value   ("a_pos"     , a_pos);
+   --rce;  if (a_pos < 0 || a_pos >= strlen (g_check)) {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   DEBUG_PROG   yLOG_value   ("a_chk"     , a_chk);
+   --rce;  if (a_chk < 0 || a_chk >= strlen (g_check)) {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   x_name = g_check [a_chk - 1];
+   DEBUG_PROG   yLOG_char    ("x_name"    , x_name);
+   --rce;  switch (x_name) {
+   case 'n'  :
+      DEBUG_PROG   yLOG_note    ("name is good");
+      break;
+   default   :
+      DEBUG_PROG   yLOG_note    ("name is illegal");
+      g_check [a_pos] = '°';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+      break;
+   }
+   x_chk = g_check [a_chk];
+   DEBUG_PROG   yLOG_char    ("x_chk"     , x_chk);
+   --rce;  switch (x_chk) {
+   case '-'  :
+      DEBUG_PROG   yLOG_note    ("needs to be created");
+      break;
+   case 'e'  :
+      DEBUG_PROG   yLOG_note    ("nothing to do");
+      g_check [a_pos] = 'e';
+      DEBUG_PROG   yLOG_exit    (__FUNCTION__);
+      return 0;
+      break;
+   case '·'  :
+      DEBUG_PROG   yLOG_note    ("pre-check was never run");
+      g_check [a_pos] = '?';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+      break;
+   default   :
+      DEBUG_PROG   yLOG_note    ("wrong type, not fixable");
+      g_check [a_pos] = '°';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+      break;
+   }
+   /*---(make update)--------------------*/
+   DEBUG_PROG   yLOG_char    ("my.abbr"   , my.abbr);
+   --rce;  switch (my.abbr) {
+   case TYPE_BLOCK : 
+      rc = mknod   (my.target, S_IFBLK, makedev (my.e_major, my.e_minor));
+      DEBUG_PROG   yLOG_value   ("block"     , rc);
+      break;
+   case TYPE_CHAR  : 
+      rc = mknod   (my.target, S_IFCHR, makedev (my.e_major, my.e_minor));
+      DEBUG_PROG   yLOG_value   ("char"      , rc);
+      break;
+   case TYPE_DIR   : 
+      rc = mkdir   (my.target, 00000);
+      DEBUG_PROG   yLOG_value   ("dir"       , rc);
+      break;
+   case TYPE_FILE  : 
+      DEBUG_PROG   yLOG_note    ("files will not be made, adminstrator must move");
+      break;
+   case TYPE_HARD  : 
+      DEBUG_PROG   yLOG_note    ("hard, TBD");
+      /*   rc = link (new, old);   */
+      break;
+   case TYPE_IPSOC : 
+      DEBUG_PROG   yLOG_note    ("ipsoc, TBD");
+      break;
+   case TYPE_PIPE  : 
+      DEBUG_PROG   yLOG_note    ("pipe, TBD");
+      break;
+   case TYPE_SYM   : 
+      DEBUG_PROG   yLOG_info    ("my.source" , my.source);
+      DEBUG_PROG   yLOG_info    ("my.target" , my.target);
+      rc = symlink (my.source, my.target);
+      DEBUG_PROG   yLOG_value   ("sym"       , rc);
+      break;
+   default         :
+      DEBUG_PROG   yLOG_note    ("do not understand type");
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+      break;
+   }
+   /*---(save-back)----------------------*/
+   --rce;  if (rc < 0) {
+      g_check [a_pos] = '°';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(save-back)----------------------*/
+   g_check [a_pos] = toupper (my.abbr);
+   /*---(complete)-----------------------*/
+   DEBUG_CONF   yLOG_exit    (__FUNCTION__);
+   return 0;
+}
 
 char         /*--> verify/change the owner ---------------[ ------ [ ------ ]-*/
-SET__owner         (char a_pos, char a_chk, int a_uid)
+SET__owner         (char a_pos, char a_chk)
 {
    /*---(locals)-----------+-----+-----+-*/
    char        rce         =  -10;
@@ -93,24 +209,31 @@ SET__owner         (char a_pos, char a_chk, int a_uid)
       break;
    case 'o'  :
       DEBUG_PROG   yLOG_note    ("nothing to do");
+      g_check [a_pos] = 'o';
       DEBUG_PROG   yLOG_exit    (__FUNCTION__);
       return 0;
       break;
+   case '·'  :
+      DEBUG_PROG   yLOG_note    ("pre-check was never run");
+      g_check [a_pos] = '?';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+      break;
    default   :
-      DEBUG_PROG   yLOG_note    ("configured wrong or not fixable");
+      DEBUG_PROG   yLOG_note    ("not fixable");
       g_check [a_pos] = '°';
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
       break;
    }
-   DEBUG_PROG   yLOG_value   ("a_uid"     , a_uid);
-   --rce;  if (a_uid < 0) {
+   DEBUG_PROG   yLOG_value   ("my.e_uid"  , my.e_uid);
+   --rce;  if (my.e_uid < 0) {
       g_check [a_pos] = '?';
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
    }
    /*---(make update)--------------------*/
-   rc  = lchown (my.target, a_uid, -1);
+   rc  = lchown (my.target, my.e_uid, -1);
    DEBUG_PROG   yLOG_value   ("lchown"    , rc);
    --rce;  if (rc < 0) {
       g_check [a_pos] = '!';
@@ -119,6 +242,152 @@ SET__owner         (char a_pos, char a_chk, int a_uid)
    }
    /*---(save-back)----------------------*/
    g_check [a_pos] = 'O';
+   /*---(complete)-----------------------*/
+   DEBUG_CONF   yLOG_exit    (__FUNCTION__);
+   return 0;
+}
+
+char         /*--> verify/change the owner ---------------[ ------ [ ------ ]-*/
+SET__group         (char a_pos, char a_chk)
+{
+   /*---(locals)-----------+-----+-----+-*/
+   char        rce         =  -10;
+   char        rc          =    0;
+   char        x_chk       =  '·';
+   /*---(print header)-------------------*/
+   DEBUG_CONF   yLOG_enter   (__FUNCTION__);
+   /*---(quick-out)----------------------*/
+   DEBUG_PROG   yLOG_char    ("my.act"    , my.act);
+   --rce;  if (my.act != 'a') {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(defense)------------------------*/
+   DEBUG_PROG   yLOG_info    ("g_check"   , g_check);
+   DEBUG_PROG   yLOG_value   ("a_pos"     , a_pos);
+   --rce;  if (a_pos < 0 || a_pos >= strlen (g_check)) {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   DEBUG_PROG   yLOG_value   ("a_chk"     , a_chk);
+   --rce;  if (a_chk < 0 || a_chk >= strlen (g_check)) {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   x_chk = g_check [a_chk];
+   DEBUG_PROG   yLOG_char    ("x_chk"     , x_chk);
+   --rce;  switch (x_chk) {
+   case '-'  :
+      DEBUG_PROG   yLOG_note    ("fixable");
+      break;
+   case 'g'  :
+      DEBUG_PROG   yLOG_note    ("nothing to do");
+      g_check [a_pos] = 'g';
+      DEBUG_PROG   yLOG_exit    (__FUNCTION__);
+      return 0;
+      break;
+   case '·'  :
+      DEBUG_PROG   yLOG_note    ("pre-check was never run");
+      g_check [a_pos] = '?';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+      break;
+   default   :
+      DEBUG_PROG   yLOG_note    ("not fixable");
+      g_check [a_pos] = '°';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+      break;
+   }
+   DEBUG_PROG   yLOG_value   ("my.e_gid"  , my.e_gid);
+   --rce;  if (my.e_gid < 0) {
+      g_check [a_pos] = '?';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(make update)--------------------*/
+   rc  = lchown (my.target, -1, my.e_gid);
+   DEBUG_PROG   yLOG_value   ("lchown"    , rc);
+   --rce;  if (rc < 0) {
+      g_check [a_pos] = '!';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(save-back)----------------------*/
+   g_check [a_pos] = 'G';
+   /*---(complete)-----------------------*/
+   DEBUG_CONF   yLOG_exit    (__FUNCTION__);
+   return 0;
+}
+
+char         /*--> verify/change the owner ---------------[ ------ [ ------ ]-*/
+SET__perms         (char a_pos, char a_chk)
+{
+   /*---(locals)-----------+-----+-----+-*/
+   char        rce         =  -10;
+   char        rc          =    0;
+   char        x_chk       =  '·';
+   /*---(print header)-------------------*/
+   DEBUG_CONF   yLOG_enter   (__FUNCTION__);
+   /*---(quick-out)----------------------*/
+   DEBUG_PROG   yLOG_char    ("my.act"    , my.act);
+   --rce;  if (my.act != 'a') {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(defense)------------------------*/
+   DEBUG_PROG   yLOG_info    ("g_check"   , g_check);
+   DEBUG_PROG   yLOG_value   ("a_pos"     , a_pos);
+   --rce;  if (a_pos < 0 || a_pos >= strlen (g_check)) {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   DEBUG_PROG   yLOG_value   ("a_chk"     , a_chk);
+   --rce;  if (a_chk < 0 || a_chk >= strlen (g_check)) {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   x_chk = g_check [a_chk];
+   DEBUG_PROG   yLOG_char    ("x_chk"     , x_chk);
+   --rce;  switch (x_chk) {
+   case '-'  :
+      DEBUG_PROG   yLOG_note    ("fixable");
+      break;
+   case 'p'  :
+      DEBUG_PROG   yLOG_note    ("nothing to do");
+      g_check [a_pos] = 'p';
+      DEBUG_PROG   yLOG_exit    (__FUNCTION__);
+      return 0;
+      break;
+   case '·'  :
+      DEBUG_PROG   yLOG_note    ("pre-check was never run");
+      g_check [a_pos] = '?';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+      break;
+   default   :
+      DEBUG_PROG   yLOG_note    ("not fixable");
+      g_check [a_pos] = '°';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+      break;
+   }
+   DEBUG_PROG   yLOG_value   ("my.e_mode"  , my.e_mode);
+   --rce;  if (my.e_mode < 0) {
+      g_check [a_pos] = '?';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(make update)--------------------*/
+   rc  = chmod (my.target, my.e_mode);
+   DEBUG_PROG   yLOG_value   ("chmod"     , rc);
+   --rce;  if (rc < 0) {
+      g_check [a_pos] = '!';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(save-back)----------------------*/
+   g_check [a_pos] = 'P';
    /*---(complete)-----------------------*/
    DEBUG_CONF   yLOG_exit    (__FUNCTION__);
    return 0;

@@ -37,8 +37,8 @@
 /*········· ··········· ´·····························´········································*/
 #define     P_VERMAJOR  ""
 #define     P_VERMINOR  ""
-#define     P_VERNUM    "2.0b"
-#define     P_VERTXT    "checking functions are running sweet"
+#define     P_VERNUM    "2.0c"
+#define     P_VERTXT    "basic entry creation in place"
 /*········· ··········· ´·····························´········································*/
 #define     P_PRIORITY  "direct, simple, brief, vigorous, and lucid (h.w. fowler)"
 #define     P_PRINCIPAL "[grow a set] and build your wings on the way down (r. bradbury)"
@@ -440,6 +440,8 @@ struct cACCESSOR {
    int         e_mode;                 /* ´·· expected mode                   */
    char        type;                   /* type of source                      */
    char        source      [LEN_HUND]; /* source                              */
+   int         e_major;                /* ´·· device major                    */
+   int         e_minor;                /* ´·· device minor                    */
    char        reason      [LEN_HUND]; /* reason for entry (optional)         */
    tSTAT       curr_stat;              /* link to file information            */
    char        exists;                 /* file exists                         */
@@ -644,6 +646,7 @@ char        CHECK__type             (char a_pos, char a_type);
 char        CHECK__owner            (char a_pos, cchar a_owner [LEN_TERSE]);
 char        CHECK__group            (char a_pos, cchar a_group [LEN_TERSE]);
 char        CHECK__perms            (char a_pos, cchar a_perms [LEN_TERSE]);
+char        CHECK__link             (char a_pos, char a_chk, cchar a_name [LEN_HUND], cchar a_source [LEN_HUND]);
 char        CHECK__nodes            (char a_pos, cchar a_source [LEN_HUND]);
 /*---(combos)---------------*/
 char        CHECK__driver           (char a_abbr, char a_pass, cchar a_name [LEN_HUND], cchar a_owner [LEN_TERSE], cchar a_group [LEN_TERSE], cchar a_perms [LEN_TERSE], char a_type, cchar a_source [LEN_HUND]);
@@ -655,6 +658,15 @@ char        CHECK_block             (char a_pass, cchar a_name [LEN_HUND], cchar
 /*---(unittest)-------------*/
 char*       CHECK__unit             (char *a_question, int a_num);
 /*---(done)----------------*/
+
+
+
+char        SET__exist              (char a_pos, char a_chk);
+char        SET__owner              (char a_pos, char a_chk);
+char        SET__group              (char a_pos, char a_chk);
+char        SET__perms              (char a_pos, char a_chk);
+
+
 
 
 char        /*  == 0 (good), < 0 (hard failure), > 0 (unforced change needed) */
