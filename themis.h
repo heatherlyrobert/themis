@@ -2,50 +2,51 @@
 
 
 /*===[[ HEADER ]]=============================================================*/
-/*                      ´·········1·········2·········3·········4·········5·········6·········7*/
-/*--------- 12345678901 ´123456789-123456789-123456789-123456789-123456789-123456789-123456789-*/
-/*········· ··········· ´·····························´········································*/
+/*                      ----------1---------2---------3---------4---------5---------6---------7*/
+/*--------- 12345678901 -123456789-123456789-123456789-123456789-123456789-123456789-123456789-*/
+/*--------- ----------- -----------------------------------------------------------------------*/
 #define     P_NAME      "themis"
+/*--------- ----------- -----------------------------------------------------------------------*/
 #define     P_FOCUS     "SA, system administration"
 #define     P_NICHE     "cm, configuration management"
 #define     P_SUBJECT   "system configuration enforcer"
 #define     P_PURPOSE   "enforce consistent structure, security, and configuration"
-/*········· ··········· ´·····························´········································*/
+/*--------- ----------- -----------------------------------------------------------------------*/
 #define     P_NAMESAKE  "themis-euboulos (divine law)"
 #define     P_PRONOUNCE "thee·mihs"
 #define     P_HERITAGE  "titaness of divine law, custom, & order"
 #define     P_BRIEFLY   "divine law, custom, & order"
 #define     P_IMAGERY   ""
 #define     P_REASON    ""
-/*········· ··········· ´·····························´········································*/
+/*--------- ----------- -----------------------------------------------------------------------*/
 #define     P_ONELINE   P_NAMESAKE " " P_SUBJECT
-/*········· ··········· ´·····························´········································*/
+/*--------- ----------- -----------------------------------------------------------------------*/
 #define     P_HOMEDIR   "/home/system/themis.configuration_management"
 #define     P_BASENAME  "themis"
 #define     P_FULLPATH  "/usr/local/sbin/themis"
-#define     P_SUFFIX    "···"
-#define     P_CONTENT   "···"
-/*········· ··········· ´·····························´········································*/
+#define     P_SUFFIX    ""
+#define     P_CONTENT   ""
+/*--------- ----------- -----------------------------------------------------------------------*/
 #define     P_SYSTEM    "gnu/linux   (powerful, ubiquitous, technical, and hackable)"
 #define     P_LANGUAGE  "ansi-c      (wicked, limitless, universal, and everlasting)"
 #define     P_COMPILER  "gcc 5.3.0"
 #define     P_CODESIZE  "large       (appoximately 10,000 slocl)"
 #define     P_DEPENDS   "none"
-/*········· ··········· ´·····························´········································*/
+/*--------- ----------- -----------------------------------------------------------------------*/
 #define     P_AUTHOR    "heatherlyrobert"
 #define     P_CREATED   "2014-06"
-/*········· ··········· ´·····························´········································*/
+/*--------- ----------- -----------------------------------------------------------------------*/
 #define     P_VERMAJOR  ""
 #define     P_VERMINOR  ""
-#define     P_VERNUM    "2.0c"
-#define     P_VERTXT    "basic entry creation in place"
-/*········· ··········· ´·····························´········································*/
+#define     P_VERNUM    "2.0d"
+#define     P_VERTXT    "huge reporting update and data update"
+/*--------- ----------- -----------------------------------------------------------------------*/
 #define     P_PRIORITY  "direct, simple, brief, vigorous, and lucid (h.w. fowler)"
 #define     P_PRINCIPAL "[grow a set] and build your wings on the way down (r. bradbury)"
 #define     P_REMINDER  "there are many better options, but i *own* every byte of this one"
-/*········· ··········· ´·····························´········································*/
-/*--------- 12345678901 ´123456789-123456789-123456789-123456789-123456789-123456789-123456789-*/
-/*                      ´·········1·········2·········3·········4·········5·········6·········7*/
+/*--------- ----------- -----------------------------------------------------------------------*/
+/*--------- 12345678901 -123456789-123456789-123456789-123456789-123456789-123456789-123456789-*/
+/*                      ----------1---------2---------3---------4---------5---------6---------7*/
 /*===[[ HEADER END ]]=========================================================*/
 
 
@@ -361,6 +362,114 @@ typedef struct group     tGROUP;
  *> #define     DEBUG_ENVI          if (debug.envi      == 'y')                       <* 
  *> #define     DEBUG_ENVIM         if (debug.envi_mas  == 'y')                       <*/
 
+/*
+ *   DIRECTORIES ------------------------------- maj  min    ---perm---   --owner-- --group--
+ *   /dev/input           directory                          drwxr-xr-x   root      root
+ *   /dev/usb             directory                          drwxr-xr-x   root      root
+ *
+ *   PIPES ------------------------------------- maj  min    ---perm---   --owner-- --group--
+ *   /dev/initctl         init                               prw-------   root      root
+ *
+ *   SYSTEM ------------------------------------ maj  min    ---perm---   --owner-- --group--
+ *   /dev/mem             physical memory          1,   1    crw-r-----   root      kmem
+ *   /dev/kmem            kernel virtual mem       1,   2    crw-r-----   root      kmem
+ *   /dev/null            bitbucket/trash          1,   3    crw-rw-rw-   root      root
+ *   /dev/port            ???                      1,   4    crw-r-----   root      kmem
+ *   /dev/zero            produces zeros           1,   5    crw-rw-rw-   root      root
+ *   /dev/full            ???                      1,   7    crw--w--w-   root      root
+ *   /dev/random          random secure            1,   8    crw-rw-rw-   root      root
+ *   /dev/urandom         random fast              1,   9    crw-rw-rw-   root      root
+ *
+ *   TTY --------------------------------------- maj  min    ---perm---   --owner-- --group--
+ *   /dev/tty0            ???                      4,   0    crw-------   root      tty
+ *   /dev/tty1            ???                      4,   1    crw-------   root      tty
+ *   /dev/ttyS0           ???                      4,  64    crw-rw----   root      tty
+ *   /dev/ttyS1           ???                      4,  65    crw-rw----   root      tty
+ *   /dev/ttyUSB0         ???                    188,   0    crw-rw----   root      tty
+ *   /dev/ttyUSB1         ???                    188,   1    crw-rw----   root      tty
+ *   /dev/tty             ???                      5,   0    crw-rw-rw-   root      tty
+ *   /dev/console         ???                      5,   1    crw-------   root      tty
+ *
+ *   FRAMEBUFFER (video abstraction) ----------- maj  min    ---perm---   --owner-- --group--
+ *   /dev/fb0             framebuffer             29,   0    crw--w----   root      video
+ *   /dev/fb0autodetect   framebuffer             29,   1    crw--w----   root      video
+ *   /dev/fb0current      framebuffer             29,   0    crw--w----   root      video
+ *   /dev/fb1             framebuffer             29,  32    crw--w----   root      video
+ *   /dev/fb1autodetect   framebuffer             29,  33    crw--w----   root      video
+ *   /dev/fb1current      framebuffer             29,  32    crw--w----   root      video
+ *
+ *   FLOPPY DISKS ------------------------------ maj  min    ---perm---   --owner-- --group--
+ *   /dev/fb0             floppy drive             2,   0    brw-rw----   root      floppy
+ *   /dev/fb1             floppy drive             2,   1    brw-rw----   root      floppy
+ *
+ *   AUDIO (channel one) ----------------------- maj  min    ---perm---   --owner-- --group--
+ *   /dev/mixer0          mixer                   14,   0    crw-rw----   root      audio
+ *   /dev/sequencer       sequencer               14,   1    crw-rw----   root      audio
+ *   /dev/midi0           midi                    14,   2    crw-rw----   root      audio
+ *   /dev/dsp0            digital signal proc     14,   3    crw-rw----   root      audio
+ *   /dev/audio0          stream                  14,   4    crw-rw----   root      audio
+ *   /dev/audioctl        control                 14,   7    crw-rw----   root      audio
+ *   /dev/music           music                   14,   8    crw-rw----   root      audio
+ *   /dev/dmmidi0         ???                     14,   9    crw-rw----   root      audio
+ *   /dev/dmfm0           ???                     14,  10    crw-rw----   root      audio
+ *   /dev/amixer0         mixer                   14,  11    crw-rw----   root      audio
+ *   /dev/amidi0          midi                    14,  13    crw-rw----   root      audio
+ *   /dev/admmidi0        midi                    14,  14    crw-rw----   root      audio
+ *   AUDIO (channel two) ----------------------- maj  min    ---perm---   --owner-- --group--
+ *   /dev/mixer1          mixer                   14,  16    crw-rw----   root      audio
+ *   /dev/midi1           midi                    14,  18    crw-rw----   root      audio
+ *   /dev/dsp1            digital signal proc     14,  19    crw-rw----   root      audio
+ *   /dev/audio1          stream                  14,  20    crw-rw----   root      audio
+ *   /dev/dmmidi1         ???                     14,  25    crw-rw----   root      audio
+ *   /dev/dmfm1           ???                     14,  26    crw-rw----   root      audio
+ *   /dev/amixer1         mixer                   14,  17    crw-rw----   root      audio
+ *   /dev/amidi1          midi                    14,  29    crw-rw----   root      audio
+ *   /dev/admmidi1        midi                    14,  30    crw-rw----   root      audio
+ *   AUDIO (links) ----------------------------- maj  min    ---perm---   --owner-- --group--
+ *   /dev/midi            midi                   link to /dev/midi0       root      root
+ *   /dev/amidi           midi                   link to /dev/amidi0      root      root
+ *   /dev/audio           audio                  link to /dev/audio0      root      root
+ *   /dev/dsp             digital signal proc    link to /dev/dsp0        root      root
+ *   /dev/mixer           mixer             c    link to /dev/mixer0      root      root
+ *
+ *
+ *   /dev/hda       b   IDE drive               22, 0...
+ *   /dev/ht0       c   IDE tape                37, 0...
+ *   /dev/md0       b   meta-disks               7, 0...   like RAID
+ *   /dev/pda       b   parallel IDE            45, 0...
+ *   /dev/pcd0      c   parallel RD rom         46, 0...
+ *   /dev/pt0       c   parallel tape           96, 0...
+ *   /dev/sda       c   SCSI drive               8, 0...
+ *
+ *   /dev/js0       c   joystick                15, 0...
+ *   /dev/lp0       c   parallel printer         6, 0...
+ *   /dev/psaux     c   PS/2 mouse              10, 1
+ *
+ *   /dev/mixer     c   sound                   14, 0
+ *
+ *   /dev/ttyS0     c   serial port             14, 0
+ *
+ *
+ *   SCSI DRIVES ------------------------------- maj  min    ---perm---   --owner-- --group--
+ *   /dev/sda             full drive               8,   0    brw-rw----   root      disk
+ *   /dev/sda1            partition                8,   1    brw-rw----   root      disk
+ *   /dev/sda2            partition                8,   2    brw-rw----   root      disk
+ *   /dev/sdb             full drive               8,  16    brw-rw----   root      disk
+ *   /dev/sdb1            partition                8,  17    brw-rw----   root      disk
+ *
+ *   LOOP DRIVES ------------------------------- maj  min    ---perm---   --owner-- --group--
+ *   /dev/loop0           special drive            7,   0    brw-rw----   root      disk
+ *   /dev/loop1           special drive            7,   1    brw-rw----   root      disk
+ *
+ *   /dev/rtc             ???                     10, 135    crw-rw----   root      kmem
+ *
+ *   LINKS ---------------s--------------------- maj  min    ---perm---   --owner-- --group--
+ *   /dev/fd              ???                    link to /proc/self/fd
+ *   /dev/stderr          ???                    link to fd/2
+ *   /dev/stdin           ???                    link to fd/0
+ *   /dev/stdout          ???                    link to fd/1
+ */
+
 
 
 /*---(directory names)--------------------------*/
@@ -383,6 +492,10 @@ typedef struct group     tGROUP;
 #define     MODE_RECHECK     'q'
 
 
+#define     FOCUS_ALL        'A'
+#define     FOCUS_YES        'y'
+#define     FOCUS_NOT        '-'
+#define     FOCUS_SHOWS      "Ay"
 
 #define     TYPE_AREA        'a'
 #define     TYPE_BLOCK       'b'
@@ -395,9 +508,17 @@ typedef struct group     tGROUP;
 #define     TYPE_IPSOC       'i'
 #define     TYPE_MACH        'm'
 #define     TYPE_PIPE        'p'
+#define     TYPE_REG         'r'
 #define     TYPE_SYM         's'
 #define     TYPE_USER        'u'
 
+
+#define     ACT_ADD          'A'
+#define     ACT_FIX          'u'
+#define     ACT_DEL          'x'
+#define     ACT_NONE         '-'
+#define     ACT_WHAT         '?'
+#define     ACT_UPDATES      "Au"
 
 
 #define     CONF_FILE         "/etc/themis.conf"
@@ -410,17 +531,21 @@ typedef struct group     tGROUP;
 #define     LEN_NAME        20     /* max naming string                       */
 #define     LEN_STR        200     /* max string                              */
 #define     LEN_UNIT       200     /* max unit test return string             */
-#define     LEN_RECD      2000     /* max record len                          */
 
+#define     RUN_VERIFY     'v'
+#define     RUN_CHECK      'c'
+#define     RUN_FULL       'f'
 
 struct cACCESSOR {
    /*---(overall)--------------*/
    char        version     [LEN_STR];  /* version reporting string            */
+   char        run_mode;               /* verify, check, full                 */
    char        host        [ 20];
    llong       time_beg;
    llong       time_end;
    char        area        [LEN_TERSE];     /* focus of current run           */
    /*---(config)---------------*/
+   char        color;                  /* output with color                   */
    int         lines;                  /* configuration lines read            */
    char        recd        [LEN_RECD]; /* configuration record                */
    int         len;                    /* record length                       */
@@ -739,12 +864,22 @@ char        CHECK_device       (
       char       *a_source    ,   /* correct permissions                      */
       char        a_mode      );  /* mode is verify or create/update          */
 
+/*===[[ themis_conf.c ]]======================================================*/
+/*345678901-12345678901-12345678901-12345678901-12345678901-12345678901-123456*/
+/*---(basics)---------------*/
+char        SET__exist              (char a_pos, char a_chk);
+char        SET_owner               (char *a_path, char *a_owner, char  a_mode);
+char        SET_group               (char *a_path, char *a_group, char  a_mode);
+char        SET_perms               (char *a_path, char  a_abbr , char *a_perms, char a_mode);
+/*---(driver)---------------*/
+char        SET_driver              (void);
+/*---(unittest)-------------*/
+char*       SET_unit                (char *a_question, int a_num);
+/*---(done)-----------------*/
 
-char        SET_owner          (char *a_path, char *a_owner, char  a_mode);
-char        SET_group          (char *a_path, char *a_group, char  a_mode);
-char        SET_perms          (char *a_path, char  a_abbr , char *a_perms, char a_mode);
-char*       SET_unit           (char *a_question, int a_num);
-
+char        RPTG_divider       (FILE *f);
+char        RPTG_summary       (FILE *f, int a_count, int a_pass, int a_fail, int a_badd, int a_modd);
+char        RPTG_final         (FILE *f, int a_area, int a_step, int a_pass, int a_fail, int a_badd, int a_modd);
 char        RPTG_fancify       (char a_check [LEN_HUND]);
 char        RPTG_beg           (void);
 char        RPTG_subhead       (char *a_title, char *a_desc, char a_mode);

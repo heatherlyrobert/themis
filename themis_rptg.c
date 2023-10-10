@@ -4,12 +4,56 @@
 int         s_summs     = 0;
 
 
+
+
+char
+RPTG_divider       (FILE *f)
+{
+   if (f == NULL) {
+      printf  (   "   ---verb---  ---description-------------------------  act val sys  ---focus-------------------------------     ---request---   ---checks---   ---update---   --rechecks--   ·\n");
+   } else {
+      fprintf (f, "   ---verb---  ---description-------------------------  act val sys  ---focus-------------------------------     ---request---   ---checks---   ---update---   --rechecks--   ·\n");
+   }
+   return 0;
+}
+
+char
+RPTG_summary       (FILE *f, int a_step, int a_pass, int a_fail, int a_badd, int a_modd)
+{
+   char        x_result    [LEN_TERSE] = "";
+   if (a_step <= 0)  return 0;
+   if (a_step == a_pass)  strcpy (x_result, "passed");
+   else                   strcpy (x_result, "FAILED");
+   RPTG_divider (NULL);
+   if (f == NULL) {
+      printf  (   "   SUMMARY            STEP = %4d   PASS = %4d   FAIL = %4d   BADD = %4d   MODD = %4d   ============================================================================ %s\n", a_step, a_pass, a_fail, a_badd, a_modd, x_result);
+   } else {
+      fprintf (f, "   SUMMARY            STEP = %4d   PASS = %4d   FAIL = %4d   BADD = %4d   MODD = %4d   ============================================================================ %s\n", a_step, a_pass, a_fail, a_badd, a_modd, x_result);
+   }
+   return 0;
+}
+
+char
+RPTG_final         (FILE *f, int a_area, int a_step, int a_pass, int a_fail, int a_badd, int a_modd)
+{
+   char        x_result    [LEN_TERSE] = "";
+   if (a_area <= 0)  return 0;
+   if (a_step == a_pass)  strcpy (x_result, "passed");
+   else                   strcpy (x_result, "FAILED");
+   if (f == NULL) {
+      printf  (   "END     AREA = %4d   STEP = %4d   PASS = %4d   FAIL = %4d   BADD = %4d   MODD = %4d   ============================================================================ %s\n", a_area, a_step, a_pass, a_fail, a_badd, a_modd, x_result);
+   } else {
+      fprintf (f, "END     AREA = %4d   STEP = %4d   PASS = %4d   FAIL = %4d   BADD = %4d   MODD = %4d   ============================================================================ %s\n", a_area, a_step, a_pass, a_fail, a_badd, a_modd, x_result);
+   }
+   return 0;
+}
+
 char
 RPTG_fancify       (char a_check [LEN_HUND])
 {
    int         l           =    0;
    char        t           [LEN_DESC] = "";
-   strlcpy (g_fancy, "", LEN_RECD);
+   ystrlcpy (g_fancy, "", LEN_RECD);
    l = strlen (a_check);
    /*> printf ("%2dl, %2dp, %2dc, %2du, %2dr, %2dj\n", l, END_PARSE, END_CHECK, END_UPDATE, END_RECHECK, END_FINAL);   <*/
    if (l > END_PARSE) {
@@ -27,11 +71,11 @@ RPTG_fancify       (char a_check [LEN_HUND])
          sprintf (t, "%s%-13.13s%s", BOLD_ERR, a_check, BOLD_OFF);
          break;
       }
-      strlcat (g_fancy, t, LEN_RECD);
+      ystrlcat (g_fancy, t, LEN_RECD);
    }
    if (l > BEG_CHECK) {
       sprintf (t, "%-3.3s"    , a_check + BEG_CHECK - 2);
-      strlcat (g_fancy, t, LEN_RECD);
+      ystrlcat (g_fancy, t, LEN_RECD);
    }
    if (l > END_CHECK) {
       switch (a_check [END_CHECK]) {
@@ -41,18 +85,22 @@ RPTG_fancify       (char a_check [LEN_HUND])
       case 'y'  :
          sprintf (t, "%s%-12.12s%s", FORE_GRN, a_check + BEG_CHECK + 1, FORE_OFF);
          break;
-      case ' '  : case '-'  :
+      case ' '  :
+         if (my.act == ACT_DEL)  sprintf (t, "%s%-12.12s%s", FORE_GRN, a_check + BEG_CHECK + 1, FORE_OFF);
+         else                    sprintf (t, "%s%-12.12s%s", FORE_YEL, a_check + BEG_CHECK + 1, FORE_OFF);
+         break;
+      case '-'  :
          sprintf (t, "%s%-12.12s%s", FORE_YEL, a_check + BEG_CHECK + 1, FORE_OFF);
          break;
       case '°'  : case '!'  : default :
          sprintf (t, "%s%-12.12s%s", BOLD_ERR, a_check + BEG_CHECK + 1, BOLD_OFF);
          break;
       }
-      strlcat (g_fancy, t, LEN_RECD);
+      ystrlcat (g_fancy, t, LEN_RECD);
    }
    if (l > BEG_UPDATE) {
       sprintf (t, "%-3.3s"    , a_check + BEG_UPDATE - 2);
-      strlcat (g_fancy, t, LEN_RECD);
+      ystrlcat (g_fancy, t, LEN_RECD);
    }
    if (l > END_UPDATE) {
       switch (a_check [END_UPDATE]) {
@@ -69,11 +117,11 @@ RPTG_fancify       (char a_check [LEN_HUND])
          sprintf (t, "%s%-12.12s%s", BOLD_ERR, a_check + BEG_UPDATE + 1, BOLD_OFF);
          break;
       }
-      strlcat (g_fancy, t, LEN_RECD);
+      ystrlcat (g_fancy, t, LEN_RECD);
    }
    if (l > BEG_RECHECK) {
       sprintf (t, "%-3.3s"    , a_check + BEG_RECHECK - 2);
-      strlcat (g_fancy, t, LEN_RECD);
+      ystrlcat (g_fancy, t, LEN_RECD);
    }
    if (l > END_RECHECK) {
       switch (a_check [END_RECHECK]) {
@@ -83,23 +131,27 @@ RPTG_fancify       (char a_check [LEN_HUND])
       case 'y'  :
          sprintf (t, "%s%-12.12s%s", FORE_GRN, a_check + BEG_RECHECK + 1, FORE_OFF);
          break;
-      case ' '  : case '-'  :
+      case ' '  :
+         if (my.act == ACT_DEL)  sprintf (t, "%s%-12.12s%s", FORE_GRN, a_check + BEG_CHECK + 1, FORE_OFF);
+         else                    sprintf (t, "%s%-12.12s%s", FORE_YEL, a_check + BEG_CHECK + 1, FORE_OFF);
+         break;
+      case '-'  :
          sprintf (t, "%s%-12.12s%s", FORE_YEL, a_check + BEG_RECHECK + 1, FORE_OFF);
          break;
       case '°'  : case '!'  : default :
          sprintf (t, "%s%-12.12s%s", BOLD_ERR, a_check + BEG_RECHECK + 1, BOLD_OFF);
          break;
       }
-      strlcat (g_fancy, t, LEN_RECD);
+      ystrlcat (g_fancy, t, LEN_RECD);
    }
    if (l >= END_FINAL) {
       sprintf (t, "%-3.3s"    , a_check + BEG_RECHECK - 2);
-      strlcat (g_fancy, t, LEN_RECD);
+      ystrlcat (g_fancy, t, LEN_RECD);
       switch (a_check [END_FINAL]) {
       case '·'  :
          sprintf (t, "%-1.1s"    , a_check + END_FINAL);
          break;
-      case 'y'  :
+      case 'Y'  :
          sprintf (t, "%s%-1.1s%s", FORE_GRN, a_check + END_FINAL, FORE_OFF);
          break;
       case ' '  : case '-'  :
@@ -109,7 +161,7 @@ RPTG_fancify       (char a_check [LEN_HUND])
          sprintf (t, "%s%-1.1s%s", BOLD_ERR, a_check + END_FINAL, BOLD_OFF);
          break;
       }
-      strlcat (g_fancy, t, LEN_RECD);
+      ystrlcat (g_fancy, t, LEN_RECD);
    }
    return 0;
 }

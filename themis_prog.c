@@ -18,20 +18,40 @@ PROG_version       (void)
 {
    char    t [20] = "";
 #if    __TINYC__ > 0
-   strlcpy (t, "[tcc built  ]", 15);
+   ystrlcpy (t, "[tcc built  ]", 15);
 #elif  __GNUC__  > 0
-   strlcpy (t, "[gnu gcc    ]", 15);
+   ystrlcpy (t, "[gnu gcc    ]", 15);
 #elif  __CBANG__  > 0
-   strlcpy (t, "[cbang      ]", 15);
+   ystrlcpy (t, "[cbang      ]", 15);
 #elif  __HEPH__  > 0
    strncpy (t, "[hephaestus ]", 18);
 #else
-   strlcpy (t, "[unknown    ]", 15);
+   ystrlcpy (t, "[unknown    ]", 15);
 #endif
    snprintf (my.version, 100, "%s   %s : %s", t, P_VERNUM, P_VERTXT);
    return my.version;
 }
 
+char
+PROG_usage              (void)
+{
+   printf ("%s\n"   , P_FULLPATH);
+   printf ("   %s\n", P_ONELINE);
+   printf ("\n");
+   printf ("   <scope>   means one of the named configuration sections, null means everything\n");
+   printf ("\n");
+   printf ("   themis --verify <scope>\n");
+   printf ("       checks the status of every object in scope, but takes no action\n");
+   printf ("\n");
+   printf ("   themis --check  <scope>\n");
+   printf ("       check the status of every object in scope\n");
+   printf ("\n");
+   printf ("   themis --full   <scope>\n");
+   printf ("       checks the status, automaticly attempts to handle issues, then re-checks\n");
+   printf ("\n");
+   exit (0);
+   return 0;
+}
 
 
 /*====================------------------------------------====================*/
@@ -109,6 +129,8 @@ PROG__init              (int a_argc, char *a_argv[])
    my.report_summ = 'y';
    my.report_warn = 'y';
    my.audit_only  = '-';
+   my.run_mode    = RUN_FULL;
+   my.color       = '-';
    /*---(conf)---------------------------*/
    DEBUG_PROG   yLOG_note    ("configuration vars");
    my.lines       = 0;
@@ -153,9 +175,13 @@ PROG__args          (int argc, char *argv[])
       if (a[0] == '@')  continue;
       ++x_args;
       /*---(overall)---------------------*/
-      if      (strcmp(a, "--audit"           ) == 0)   my.audit_only = 'y';
-      else if (strcmp(a, "--fhs"             ) == 0)   my.audit_only = 'y';
-      else                                             strlcpy (my.area, a, LEN_TERSE);
+      if      (strcmp (a, "--usage"           ) == 0)   PROG_usage ();
+      else if (strcmp (a, "--help"            ) == 0)   PROG_usage ();
+      else if (strcmp (a, "--verify"          ) == 0)   my.run_mode = RUN_VERIFY;
+      else if (strcmp (a, "--check"           ) == 0)   my.run_mode = RUN_CHECK;
+      else if (strcmp (a, "--full"            ) == 0)   my.run_mode = RUN_FULL;
+      else if (strcmp (a, "--color"           ) == 0)   my.color    = 'y';
+      else                                              ystrlcpy (my.area, a, LEN_TERSE);
    }
    /*---(complete)-----------------------*/
    DEBUG_PROG   yLOG_exit    (__FUNCTION__);

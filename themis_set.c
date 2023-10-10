@@ -18,6 +18,13 @@ char        g_modetext [10][5] = {
    "---", "--s", "-g-", "-gs", "u--", "u-s", "ug-", "ugs"
 };
 
+/*
+ *  read  = 4
+ *  write = 2
+ *  exec  = 1
+ *
+ */
+
 const tPERM g_perms [MAX_PERM] = {
    /* 123456789012345    12345678901234567890123456789012345678901234567890123456789012345678901234567890   12345 */
    /* ---name--------    ---description------------------------------------------------------------------   perms */
@@ -26,17 +33,24 @@ const tPERM g_perms [MAX_PERM] = {
    { "f_nodel"        , "everyone can see, access, and modify, but only owner can delete"                 , 01777 },
    /*---(directories)-------------*/
    { "d_open"         , "everyone can access directory, then list, read, create, and delete files"        , 00777 },
+   { "d_group"        , "owner and group can do anything, others can read"                                , 00775 },
    { "d_control"      , "owner and group can do anything, everyone else can do nothing"                   , 00770 },
    { "d_normal"       , "everyone can access directory, group and other can list and read files only"     , 00755 },
+   { "d_sgroup"       , "same as d_normal, but new files get directories group id"                        , 02755 },
    { "d_secure"       , "owner can do anything,  group can list and read files only, all others nothing"  , 00750 },
    { "d_tight"        , "owner can do anything, all others nothing"                                       , 00700 },
+   { "d_tights"       , "owner can do anything, all others nothing"                                       , 00700 },
+   { "d_tights"       , "everyone can see, access, and modify, but only owner can delete"                 , 01700 },
+   /*---(root)--------------------*/
    { "r_share"        , "only root specifically can modify; but all others can see and access"            , 00555 },
    { "r_only"         , "only root specifically can sse, access, or modify; even root group can not"      , 00000 },
    /*---(regular files)-----------*/
    { "f_open"         , "everyone can read and write"                                                     , 00666 },
    { "f_control"      , "owner and group can read and write, everyone else gets nothing"                  , 00660 },
+   { "f_hidev"        , "owner and group can read and write, everyone else read-only"                     , 00662 },
    { "f_normal"       , "owner can read and write, everyone else can read only"                           , 00644 },
    { "f_secure"       , "owner can read and write, group can read only, everyone else gets nothing"       , 00640 },
+   { "f_tty"          , "owner can read and write, group can write only, everyone else gets nothing"      , 00620 },
    { "f_tight"        , "owner can read and write, everyone else gets nothing"                            , 00600 },
    /*---(end)---------------------*/
    { "end-of-entries" , "---marker---"                                                                    , 00000 },
@@ -67,7 +81,11 @@ SET__exist         (char a_pos, char a_chk)
    DEBUG_CONF   yLOG_enter   (__FUNCTION__);
    /*---(quick-out)----------------------*/
    DEBUG_PROG   yLOG_char    ("my.act"    , my.act);
-   --rce;  if (my.act != 'a') {
+   if (my.act == ACT_NONE) {
+      DEBUG_PROG   yLOG_exit    (__FUNCTION__);
+      return 0;
+   }
+   --rce;  if (strchr (ACT_UPDATES, my.act) == NULL) {
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
    }
@@ -83,6 +101,7 @@ SET__exist         (char a_pos, char a_chk)
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
    }
+   /*---(check naming)-------------------*/
    x_name = g_check [a_chk - 1];
    DEBUG_PROG   yLOG_char    ("x_name"    , x_name);
    --rce;  switch (x_name) {
@@ -96,6 +115,7 @@ SET__exist         (char a_pos, char a_chk)
       return rce;
       break;
    }
+   /*---(check existance)----------------*/
    x_chk = g_check [a_chk];
    DEBUG_PROG   yLOG_char    ("x_chk"     , x_chk);
    --rce;  switch (x_chk) {
@@ -125,23 +145,30 @@ SET__exist         (char a_pos, char a_chk)
    DEBUG_PROG   yLOG_char    ("my.abbr"   , my.abbr);
    --rce;  switch (my.abbr) {
    case TYPE_BLOCK : 
-      rc = mknod   (my.target, S_IFBLK, makedev (my.e_major, my.e_minor));
+      if (my.act == ACT_ADD)  rc = mknod   (my.target, S_IFBLK, makedev (my.e_major, my.e_minor));
+      else                    rc = -1;
       DEBUG_PROG   yLOG_value   ("block"     , rc);
       break;
    case TYPE_CHAR  : 
-      rc = mknod   (my.target, S_IFCHR, makedev (my.e_major, my.e_minor));
+      if (my.act == ACT_ADD)  rc = mknod   (my.target, S_IFCHR, makedev (my.e_major, my.e_minor));
+      else                    rc = -1;
       DEBUG_PROG   yLOG_value   ("char"      , rc);
       break;
    case TYPE_DIR   : 
-      rc = mkdir   (my.target, 00000);
+      if (my.act == ACT_ADD)  rc = mkdir   (my.target, 00000);
+      else                    rc = -1;
       DEBUG_PROG   yLOG_value   ("dir"       , rc);
       break;
    case TYPE_FILE  : 
       DEBUG_PROG   yLOG_note    ("files will not be made, adminstrator must move");
+      g_check [a_pos] = '·';
+      DEBUG_CONF   yLOG_exit    (__FUNCTION__);
+      return 0;
       break;
    case TYPE_HARD  : 
-      DEBUG_PROG   yLOG_note    ("hard, TBD");
-      /*   rc = link (new, old);   */
+      if (my.act == ACT_ADD)  rc = link (my.target, my.source);
+      else                    rc = -1;
+      DEBUG_PROG   yLOG_value   ("hard"      , rc);
       break;
    case TYPE_IPSOC : 
       DEBUG_PROG   yLOG_note    ("ipsoc, TBD");
@@ -150,9 +177,10 @@ SET__exist         (char a_pos, char a_chk)
       DEBUG_PROG   yLOG_note    ("pipe, TBD");
       break;
    case TYPE_SYM   : 
-      DEBUG_PROG   yLOG_info    ("my.source" , my.source);
-      DEBUG_PROG   yLOG_info    ("my.target" , my.target);
-      rc = symlink (my.source, my.target);
+      /*> DEBUG_PROG   yLOG_info    ("my.source" , my.source);                        <*/
+      /*> DEBUG_PROG   yLOG_info    ("my.target" , my.target);                        <*/
+      if (my.act == ACT_ADD)  rc = symlink (my.source, my.target);
+      else                    rc = -1;
       DEBUG_PROG   yLOG_value   ("sym"       , rc);
       break;
    default         :
@@ -174,6 +202,116 @@ SET__exist         (char a_pos, char a_chk)
    return 0;
 }
 
+char
+SET__remove        (char a_pos, char a_chk)
+{
+   /*---(locals)-----------+-----+-----+-*/
+   char        rce         =  -10;
+   char        rc          =    0;
+   char        x_name      =  '·';
+   char        x_chk       =  '·';
+   char        x_type      =  '·';
+   /*---(print header)-------------------*/
+   DEBUG_CONF   yLOG_enter   (__FUNCTION__);
+   /*---(quick-out)----------------------*/
+   DEBUG_PROG   yLOG_char    ("my.act"    , my.act);
+   --rce;  if (my.act != ACT_DEL) {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(defense)------------------------*/
+   DEBUG_PROG   yLOG_info    ("g_check"   , g_check);
+   DEBUG_PROG   yLOG_value   ("a_pos"     , a_pos);
+   --rce;  if (a_pos < 0 || a_pos >= strlen (g_check)) {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   DEBUG_PROG   yLOG_value   ("a_chk"     , a_chk);
+   --rce;  if (a_chk < 0 || a_chk >= strlen (g_check)) {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(check naming)-------------------*/
+   x_name = g_check [a_chk - 1];
+   DEBUG_PROG   yLOG_char    ("x_name"    , x_name);
+   --rce;  switch (x_name) {
+   case 'n'  :
+      DEBUG_PROG   yLOG_note    ("name is good");
+      break;
+   default   :
+      DEBUG_PROG   yLOG_note    ("name is illegal");
+      g_check [a_pos] = '°';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+      break;
+   }
+   /*---(check existance)----------------*/
+   x_chk = g_check [a_chk];
+   DEBUG_PROG   yLOG_char    ("x_chk"     , x_chk);
+   --rce;  switch (x_chk) {
+   case 'e'  :
+      DEBUG_PROG   yLOG_note    ("needs to be removed");
+      break;
+   case '-'  :
+      DEBUG_PROG   yLOG_note    ("nothing to do");
+      g_check [a_pos] = '-';
+      DEBUG_PROG   yLOG_exit    (__FUNCTION__);
+      return 0;
+      break;
+   case '·'  :
+      DEBUG_PROG   yLOG_note    ("pre-check was never run");
+      g_check [a_pos] = '?';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+      break;
+   default   :
+      DEBUG_PROG   yLOG_note    ("wrong type, not fixable");
+      g_check [a_pos] = '°';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+      break;
+   }
+   /*---(check type)---------------------*/
+   x_type = g_check [a_chk + 1];
+   if (x_type == 'r')  x_type = 'f';
+   DEBUG_PROG   yLOG_char    ("x_type"    , x_type);
+   --rce;  if (x_type != my.abbr) {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(make update)--------------------*/
+   DEBUG_PROG   yLOG_char    ("my.abbr"   , my.abbr);
+   --rce;  switch (my.abbr) {
+   case TYPE_BLOCK : case TYPE_CHAR  : case TYPE_FILE  :
+   case TYPE_HARD  : case TYPE_IPSOC : case TYPE_PIPE  : 
+   case TYPE_SYM   :
+      rc = unlink  (my.target);
+      DEBUG_PROG   yLOG_value   ("unlink"    , rc);
+      break;
+   case TYPE_DIR   : 
+      rc = rmdir   (my.target);
+      DEBUG_PROG   yLOG_value   ("dir"       , rc);
+      break;
+   default         :
+      DEBUG_PROG   yLOG_note    ("do not understand type");
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+      break;
+   }
+   /*---(save-back)----------------------*/
+   --rce;  if (rc < 0) {
+      g_check [a_pos] = '°';
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   /*---(save-back)----------------------*/
+   g_check [a_pos] = 'x';
+   /*---(save-back)----------------------*/
+   /*---(complete)-----------------------*/
+   DEBUG_CONF   yLOG_exit    (__FUNCTION__);
+   return 0;
+}
+
 char         /*--> verify/change the owner ---------------[ ------ [ ------ ]-*/
 SET__owner         (char a_pos, char a_chk)
 {
@@ -185,9 +323,17 @@ SET__owner         (char a_pos, char a_chk)
    DEBUG_CONF   yLOG_enter   (__FUNCTION__);
    /*---(quick-out)----------------------*/
    DEBUG_PROG   yLOG_char    ("my.act"    , my.act);
-   --rce;  if (my.act != 'a') {
+   --rce;  if (strchr (ACT_UPDATES, my.act) == NULL) {
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
+   }
+   if (g_check [BEG_UPDATE + 1] == '·') {
+      DEBUG_PROG   yLOG_exit    (__FUNCTION__);
+      return 0;
+   }
+   if (my.abbr == TYPE_SYM) {
+      DEBUG_PROG   yLOG_exit    (__FUNCTION__);
+      return 0;
    }
    /*---(defense)------------------------*/
    DEBUG_PROG   yLOG_info    ("g_check"   , g_check);
@@ -258,9 +404,17 @@ SET__group         (char a_pos, char a_chk)
    DEBUG_CONF   yLOG_enter   (__FUNCTION__);
    /*---(quick-out)----------------------*/
    DEBUG_PROG   yLOG_char    ("my.act"    , my.act);
-   --rce;  if (my.act != 'a') {
+   --rce;  if (strchr (ACT_UPDATES, my.act) == NULL) {
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
+   }
+   if (g_check [BEG_UPDATE + 1] == '·') {
+      DEBUG_PROG   yLOG_exit    (__FUNCTION__);
+      return 0;
+   }
+   if (my.abbr == TYPE_SYM) {
+      DEBUG_PROG   yLOG_exit    (__FUNCTION__);
+      return 0;
    }
    /*---(defense)------------------------*/
    DEBUG_PROG   yLOG_info    ("g_check"   , g_check);
@@ -331,9 +485,17 @@ SET__perms         (char a_pos, char a_chk)
    DEBUG_CONF   yLOG_enter   (__FUNCTION__);
    /*---(quick-out)----------------------*/
    DEBUG_PROG   yLOG_char    ("my.act"    , my.act);
-   --rce;  if (my.act != 'a') {
+   --rce;  if (strchr (ACT_UPDATES, my.act) == NULL) {
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
+   }
+   if (g_check [BEG_UPDATE + 1] == '·') {
+      DEBUG_PROG   yLOG_exit    (__FUNCTION__);
+      return 0;
+   }
+   if (my.abbr == TYPE_SYM) {
+      DEBUG_PROG   yLOG_exit    (__FUNCTION__);
+      return 0;
    }
    /*---(defense)------------------------*/
    DEBUG_PROG   yLOG_info    ("g_check"   , g_check);
@@ -394,6 +556,125 @@ SET__perms         (char a_pos, char a_chk)
 }
 
 
+
+/*====================------------------------------------====================*/
+/*===----                        set driver                            ----===*/
+/*====================------------------------------------====================*/
+static void  o___DRIVER__________o () { return; }
+
+char
+SET_driver              (void)
+{
+   /*---(locals)-----------+-----+-----+-*/
+   char        rce         =  -10;
+   char        rc          =    0;
+   char        x_sum       =    0;
+   char        n           =    0;
+   char        x_chk       =  '·';
+   char        x_key       [LEN_TERSE] = "    ";
+   char        x_2nd       [LEN_TERSE] = "····";
+   char        x_act       [LEN_TERSE] = "    ";
+   /*---(print header)-------------------*/
+   DEBUG_CONF   yLOG_enter   (__FUNCTION__);
+   /*---(quick-out)----------------------*/
+   DEBUG_PROG   yLOG_char    ("run_mode"  , my.run_mode);
+   if (my.run_mode != RUN_FULL) {
+      DEBUG_CONF   yLOG_exit    (__FUNCTION__);
+      return 0;
+   }
+   /*---(prepare)------------------------*/
+   CHECK_clear   ();
+   /*---(defense)------------------------*/
+   DEBUG_PROG   yLOG_char    ("my.abbr"   , my.abbr);
+   --rce;  if (strchr (g_norms, my.abbr) == NULL) {
+      DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+      return rce;
+   }
+   x_chk = g_check [END_CHECK];
+   DEBUG_PROG   yLOG_char    ("x_chk"     , x_chk);
+   if (my.act != ACT_DEL) {
+      if (x_chk == 'y') {
+         g_check [END_UPDATE] = 'y';
+         DEBUG_PROG   yLOG_exit    (__FUNCTION__);
+         return 0;
+      }
+      --rce;  if (x_chk == 0 || strchr ("- ", x_chk) == NULL) {
+         DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+         return rce;
+      }
+   } else {
+      if (x_chk == ' ') {
+         g_check [END_UPDATE] = 'y';
+         DEBUG_PROG   yLOG_exit    (__FUNCTION__);
+         return 0;
+      }
+      --rce;  if (x_chk == 0 || strchr ("y-", x_chk) == NULL) {
+         DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
+         return rce;
+      }
+   }
+   /*---(prepare)------------------------*/
+   n = BEG_UPDATE;
+   /*===(handle)=========================*/
+   /*---(additions)---------*/
+   --rce;  if (strchr (ACT_UPDATES, my.act) != NULL) {
+      rc = SET__exist (++n, BEG_CHECK + 2);
+      DEBUG_PROG   yLOG_value   ("exist"     , rc);
+      rc = SET__owner (++n, BEG_CHECK + 4);
+      DEBUG_PROG   yLOG_value   ("owner"     , rc);
+      rc = SET__group (++n, BEG_CHECK + 5);
+      DEBUG_PROG   yLOG_value   ("group"     , rc);
+      rc = SET__perms (++n, BEG_CHECK + 6);
+      DEBUG_PROG   yLOG_value   ("perms"     , rc);
+   }
+   /*---(deletes)-----------*/
+   else if (my.act == ACT_DEL) {
+      rc = SET__remove (++n, BEG_CHECK + 2);
+   }
+   /*===(create answer)==================*/
+   /*---(checks)------------*/
+   if (my.act == ACT_NONE) {
+      strcpy (x_key, "····");
+   }
+   /*---(additions)---------*/
+   --rce;  if (strchr (ACT_UPDATES, my.act) != NULL) {
+      switch (g_check [BEG_CHECK  + 2]) {
+      case 'e' :  x_key [0] = 'e';                 break;
+      case '-' :  x_key [0] = toupper (my.abbr);   break;
+      default  :  x_key [0] = '°';                 break;
+      }
+      switch (g_check [BEG_CHECK  + 4]) {
+      case 'o' :  x_key [1] = 'o';                 break;
+      case '-' :  x_key [1] = 'O';                 break;
+      default  :  x_key [1] = '°';                 break;
+      }
+      switch (g_check [BEG_CHECK  + 5]) {
+      case 'g' :  x_key [2] = 'g';                 break;
+      case '-' :  x_key [2] = 'G';                 break;
+      default  :  x_key [2] = '°';                 break;
+      }
+      switch (g_check [BEG_CHECK  + 6]) {
+      case 'p' :  x_key [3] = 'p';                 break;
+      case '-' :  x_key [3] = 'P';                 break;
+      default  :  x_key [3] = '°';                 break;
+      }
+   }
+   /*---(deletes)-----------*/
+   if (my.act == ACT_DEL) {
+      strcpy (x_key, "x···");
+   }
+   DEBUG_PROG   yLOG_info    ("x_key"     , x_key);
+   /*---(judgement)----------------------*/
+   sprintf (x_act, "%-4.4s", g_check + BEG_UPDATE + 1);
+   DEBUG_PROG   yLOG_info    ("x_act"     , x_act);
+   if      (strcmp (x_act, x_key)  == 0)  g_check [END_UPDATE] = 'y';
+   else if (strcmp (x_act, x_2nd)  == 0)  g_check [END_UPDATE] = ' ';
+   else if (strcmp (x_act, "S···") == 0)  g_check [END_UPDATE] = 'y';
+   else                                   g_check [END_UPDATE] = '°';
+   /*---(complete)-----------------------*/
+   DEBUG_CONF   yLOG_exit    (__FUNCTION__);
+   return 0;
+}
 
 
 
@@ -587,8 +868,8 @@ SET_owner          (
       return rce;
    }
    /*---(prepare)------------------------*/
-   strlcpy (u_aowner, "---(NF)---", LEN_NAME);
-   strlcpy (u_eowner, "---(NF)---", LEN_NAME);
+   ystrlcpy (u_aowner, "---(NF)---", LEN_NAME);
+   ystrlcpy (u_eowner, "---(NF)---", LEN_NAME);
    /*===[[ ACTUAL ]]=====================*/
    RPTG_FULL      fprintf (my.file_full, "      -- OWNER actual           ");
    /*---(look up actual)-----------------*/
@@ -598,7 +879,7 @@ SET_owner          (
       return rce;
    }
    RPTG_FULL      fprintf (my.file_full, "%4d %-9.9s : confirmed (as valid)\n", my.curr_stat.st_uid, p->pw_name);
-   strlcpy (u_aowner, p->pw_name, LEN_NAME);
+   ystrlcpy (u_aowner, p->pw_name, LEN_NAME);
    /*===[[ EXPECT ]]=====================*/
    RPTG_FULL      fprintf (my.file_full, "      --       expected         ");
    /*---(defenses)-----------------------*/
@@ -606,7 +887,7 @@ SET_owner          (
       RPTG_FULL   fprintf (my.file_full, "   - %-9.9s : FAILED, null\n"      , "(null)---");
       return rce;
    }
-   strlcpy (u_eowner, a_owner, LEN_NAME);
+   ystrlcpy (u_eowner, a_owner, LEN_NAME);
    /*===[[ NO-TOUCH ]]===================*/
    if (strcmp (a_owner, "tty_root") == 0) {   /* specific to tty devices     */
       RPTG_FULL   fprintf (my.file_full, "%4d %-9.9s : confirmed (as valid)\n"   , x_uid, a_owner);
@@ -658,7 +939,7 @@ SET_owner          (
       return rce;
    }
    RPTG_FULL      fprintf (my.file_full, "%4d %-9.9s : confirmed (as valid)\n", my.curr_stat.st_uid, p->pw_name);
-   strlcpy (u_aowner, p->pw_name, LEN_NAME);
+   ystrlcpy (u_aowner, p->pw_name, LEN_NAME);
    /*---(retest)-------------------------*/
    RPTG_FULL      fprintf (my.file_full, "      --       re-compare       ");
    --rce;  if (my.curr_stat.st_uid != x_uid) {
@@ -687,8 +968,8 @@ SET_group          (
       return rce;
    }
    /*---(prepare)------------------------*/
-   strlcpy (u_egroup, "---(NF)---", LEN_NAME);
-   strlcpy (u_agroup, "---(NF)---", LEN_NAME);
+   ystrlcpy (u_egroup, "---(NF)---", LEN_NAME);
+   ystrlcpy (u_agroup, "---(NF)---", LEN_NAME);
    /*===[[ ACTUAL ]]=====================*/
    RPTG_FULL      fprintf (my.file_full, "      -- GROUP actual           ");
    /*---(look up actual)-----------------*/
@@ -698,7 +979,7 @@ SET_group          (
       return rce;
    }
    RPTG_FULL      fprintf (my.file_full, "%4d %-9.9s : confirmed (as valid)\n", my.curr_stat.st_gid, g->gr_name);
-   strlcpy (u_agroup, g->gr_name, LEN_NAME);
+   ystrlcpy (u_agroup, g->gr_name, LEN_NAME);
    /*===[[ EXPECT ]]=====================*/
    RPTG_FULL      fprintf (my.file_full, "      --       expected         ");
    /*---(defenses)-----------------------*/
@@ -706,7 +987,7 @@ SET_group          (
       RPTG_FULL   fprintf (my.file_full, "   - %-9.9s : FAILED, null\n"      , "(null)---");
       return rce;
    }
-   strlcpy (u_egroup, a_group, LEN_NAME);
+   ystrlcpy (u_egroup, a_group, LEN_NAME);
    /*---(look up owner)------------------*/
    g = getgrnam (a_group);
    --rce;  if (g == NULL) {
@@ -751,7 +1032,7 @@ SET_group          (
       return rce;
    }
    RPTG_FULL   fprintf (my.file_full, "%4d %-9.9s : confirmed (as valid)\n", my.curr_stat.st_gid, g->gr_name);
-   strlcpy (u_agroup, g->gr_name, LEN_NAME);
+   ystrlcpy (u_agroup, g->gr_name, LEN_NAME);
    /*---(retest)-------------------------*/
    RPTG_FULL      fprintf (my.file_full, "      --       re-compare       ");
    --rce;  if (my.curr_stat.st_gid != x_gid) {
@@ -777,27 +1058,27 @@ SET_permtext       (
    char        x_perms     [LEN_NAME];      /* text representation of perms   */
    int         i           = 0;             /* generic iterator               */
    /*---(prepare)------------------------*/
-   strlcat (x_perms, "---(NF)---"  , LEN_NAME);
+   ystrlcat (x_perms, "---(NF)---"  , LEN_NAME);
    /*---(translate type)-----------------*/
    for (i = 0; i < MAX_VERB; ++i) {
       if (g_verbs [i].abbr != a_type) continue;
       x_type = g_verbs [i].perm;
    }
    --rce;  if (x_type == ' ') {
-      if (a_text != NULL)  strlcpy (a_text, x_perms, LEN_NAME);
+      if (a_text != NULL)  ystrlcpy (a_text, x_perms, LEN_NAME);
       return rce;
    }
    x_perms [0] = x_type;
    x_perms [1] = '\0';
    /*---(translate perms)----------------*/
    a = (a_numeric & 0000700) / 00100;
-   strlcat (x_perms, g_permtext [a], LEN_NAME);
+   ystrlcat (x_perms, g_permtext [a], LEN_NAME);
    a = (a_numeric & 0000070) / 00010;
-   strlcat (x_perms, g_permtext [a], LEN_NAME);
+   ystrlcat (x_perms, g_permtext [a], LEN_NAME);
    a = (a_numeric & 0000007);
-   strlcat (x_perms, g_permtext [a], LEN_NAME);
+   ystrlcat (x_perms, g_permtext [a], LEN_NAME);
    /*---(return)-------------------------*/
-   if (a_text != NULL)  strlcpy (a_text, x_perms, LEN_NAME);
+   if (a_text != NULL)  ystrlcpy (a_text, x_perms, LEN_NAME);
    return 0;
 }
 
@@ -820,13 +1101,13 @@ SET_perms          (
       return rce;
    }
    /*---(prepare)------------------------*/
-   strlcpy (u_eperms, "---(bad)--", LEN_NAME);
-   strlcpy (u_aperms, "---(n/a)--", LEN_NAME);
+   ystrlcpy (u_eperms, "---(bad)--", LEN_NAME);
+   ystrlcpy (u_aperms, "---(n/a)--", LEN_NAME);
    /*===[[ ACTUAL ]]=====================*/
    RPTG_FULL      fprintf (my.file_full, "      -- PERMS actual         ");
    /*---(interpret)----------------------*/
    SET_permtext (a_abbr, my.curr_stat.st_mode, x_perms);
-   strlcpy (u_aperms, x_perms, LEN_NAME);
+   ystrlcpy (u_aperms, x_perms, LEN_NAME);
    RPTG_FULL      fprintf (my.file_full, "%04o %-10.10s  : ", my.curr_stat.st_mode & 007777, x_perms);
    RPTG_FULL      fprintf (my.file_full, "confirmed (as valid)\n");
    /*===[[ EXPECT ]]=====================*/
@@ -843,7 +1124,7 @@ SET_perms          (
    SET_permtext (a_abbr, x_value, x_perms);
    RPTG_FULL      fprintf (my.file_full, "%04o %-10.10s  : ", x_value & 007777, x_perms);
    RPTG_FULL      fprintf (my.file_full, "confirmed (as valid)\n");
-   strlcpy (u_eperms, x_perms, LEN_NAME);
+   ystrlcpy (u_eperms, x_perms, LEN_NAME);
    /*---(check match)--------------------*/
    RPTG_FULL      fprintf (my.file_full, "      --       comparison       ");
    if ((x_value & 007777) == (my.curr_stat.st_mode & 007777)) {
@@ -872,7 +1153,7 @@ SET_perms          (
    /*---(interpret)----------------------*/
    RPTG_FULL      fprintf (my.file_full, "      --       new actual     ");
    SET_permtext (a_abbr, my.curr_stat.st_mode, x_perms);
-   strlcpy (u_aperms, x_perms, LEN_NAME);
+   ystrlcpy (u_aperms, x_perms, LEN_NAME);
    RPTG_FULL      fprintf (my.file_full, "%04o %-10.10s  : ", my.curr_stat.st_mode & 007777, x_perms);
    RPTG_FULL      fprintf (my.file_full, "confirmed (as valid)\n");
    /*---(retest)-------------------------*/
@@ -1076,7 +1357,7 @@ char*            /* [------] unit test accessor ------------------------------*/
 SET_unit           (char *a_question, int a_num)
 {
    /*---(prepare)------------------------*/
-   strlcpy  (unit_answer, "SET_unit         : question not understood", LEN_UNIT);
+   ystrlcpy  (unit_answer, "SET_unit         : question not understood", LEN_UNIT);
    /*---(actuals)------------------------*/
    if        (strncmp (a_question, "act_owner"       , 20)   == 0) {
       snprintf (unit_answer, LEN_UNIT, "SET_act_owner    : %.35s"         , u_aowner     );

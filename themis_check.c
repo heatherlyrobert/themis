@@ -654,8 +654,8 @@ CHECK__nodes            (char a_pos, cchar a_source [LEN_HUND])
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
    }
-   strlcpy (x_source, a_source, LEN_HUND);
-   c = strldcnt (a_source, ',', LEN_HUND);
+   ystrlcpy (x_source, a_source, LEN_HUND);
+   c = ystrldcnt (a_source, ',', LEN_HUND);
    DEBUG_PROG   yLOG_value   ("c"         , c);
    --rce;  if (c != 1) {
       g_check [a_pos    ] = '?';
@@ -671,8 +671,8 @@ CHECK__nodes            (char a_pos, cchar a_source [LEN_HUND])
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
    }
-   strlcpy  (t, p, LEN_HUND);
-   strltrim (t, ySTR_BOTH, LEN_HUND);
+   ystrlcpy  (t, p, LEN_HUND);
+   ystrltrim (t, ySTR_BOTH, LEN_HUND);
    DEBUG_PROG   yLOG_info    ("t"         , t);
    x_emajor = atoi (t);
    DEBUG_PROG   yLOG_value   ("x_emajor"  , x_emajor);
@@ -689,8 +689,8 @@ CHECK__nodes            (char a_pos, cchar a_source [LEN_HUND])
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
    }
-   strlcpy  (t, p, LEN_HUND);
-   strltrim (t, ySTR_BOTH, LEN_HUND);
+   ystrlcpy  (t, p, LEN_HUND);
+   ystrltrim (t, ySTR_BOTH, LEN_HUND);
    DEBUG_PROG   yLOG_info    ("t"         , t);
    x_eminor = atoi (t);
    DEBUG_PROG   yLOG_value   ("x_eminor"  , x_eminor);
@@ -739,63 +739,6 @@ CHECK_clear             (void)
    return 0;
 }
 
-/*> char        /+  == 0 (good), < 0 (hard failure), > 0 (unforced change needed) +/                 <* 
- *> CHECK_beginning    (                                                                             <* 
- *>       /+----------+-----------+-----------------------------------------------+/                 <* 
- *>       char       *a_title     ,   /+ title text for reporting                 +/                 <* 
- *>       char       *a_desc      ,   /+ text for report short description        +/                 <* 
- *>       char       *a_path      ,   /+ full path including name                 +/                 <* 
- *>       char        a_mode      )   /+ mode is verify or create/update          +/                 <* 
- *> {  /+---(locals)-----------+-----------+-+/                                                      <* 
- *>    char        rc          = 0;                                                                  <* 
- *>    char        rce         = -10;                                                                <* 
- *>    /+---(header)-------------------------+/                                                      <* 
- *>    DEBUG_PROG   yLOG_enter   (__FUNCTION__);                                                     <* 
- *>    /+---(check name)---------------------+/                                                      <* 
- *>    rc = CHECK__name   ( 0, a_path);                                                              <* 
- *>    --rce; if (rc < 0) {                                                                          <* 
- *>       ++s_errors;                                                                                <* 
- *>       s_warns   += (s_checks - (s_passed + s_updates + s_errors));                               <* 
- *>       RPTG_summ   (s_checks, s_passed, s_updates, s_warns, s_errors);                            <* 
- *>       RPTG_single (my.verb, a_desc, a_mode, s_checks, s_passed, s_updates, s_warns, s_errors);   <* 
- *>       DEBUG_PROG   yLOG_note    ("name not vaiid");                                              <* 
- *>       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);                                             <* 
- *>       return rce;                                                                                <* 
- *>    }                                                                                             <* 
- *>    ++s_passed;  /+ for the naming +/                                                             <* 
- *>    /+---(get attributes)-----------------+/                                                      <* 
- *>    rc = CHECK__exist  (1, a_path);                                                               <* 
- *>    --rce; if (rc < 0) {                                                                          <* 
- *>       ++s_errors;                                                                                <* 
- *>       s_warns   += (s_checks - (s_passed + s_updates + s_errors));                               <* 
- *>       RPTG_summ   (s_checks, s_passed, s_updates, s_warns, s_errors);                            <* 
- *>       RPTG_single (my.verb, a_desc, a_mode, s_checks, s_passed, s_updates, s_warns, s_errors);   <* 
- *>       DEBUG_PROG   yLOG_note    ("path not valid");                                              <* 
- *>       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);                                             <* 
- *>       return rce;                                                                                <* 
- *>    }                                                                                             <* 
- *>    /+---(handle missing)-----------------+/                                                      <* 
- *>    --rce;  if (rc > 0 && a_mode != MODE_FORCED) {                                                <* 
- *>       ++s_errors;                                                                                <* 
- *>       s_warns   += (s_checks - (s_passed + s_updates + s_errors));                               <* 
- *>       RPTG_summ   (s_checks, s_passed, s_updates, s_warns, s_errors);                            <* 
- *>       RPTG_single (my.verb, a_desc, a_mode, s_checks, s_passed, s_updates, s_warns, s_errors);   <* 
- *>       DEBUG_PROG   yLOG_note    ("does not exist, not in forced mode");                          <* 
- *>       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);                                             <* 
- *>       return -(rce);                                                                             <* 
- *>    }                                                                                             <* 
- *>    --rce;  if (rc > 0) {                                                                         <* 
- *>       DEBUG_PROG   yLOG_note    ("does not exist, ready to force");                              <* 
- *>       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);                                             <* 
- *>       return -(rce);                                                                             <* 
- *>    }                                                                                             <* 
- *>    /+---(handle good)--------------------+/                                                      <* 
- *>    DEBUG_PROG   yLOG_note    ("exists and proper");                                              <* 
- *>    ++s_passed;  /+ for the existance +/                                                          <* 
- *>    /+---(complete)-----------------------+/                                                      <* 
- *>    DEBUG_PROG   yLOG_exit    (__FUNCTION__);                                                     <* 
- *>    return 0;                                                                                     <* 
- *> }                                                                                                <*/
 
 /*> char        /+  == 0 (good), < 0 (hard failure), > 0 (unforced change needed) +/                     <* 
  *> CHECK_ending       (                                                                                 <* 
@@ -873,70 +816,6 @@ CHECK_clear             (void)
 /*====================------------------------------------====================*/
 static void      o___FULLS___________________o (void) {;}
 
-/*> char                                                                                                                                                      <* 
- *> CHECK_file_NEWER   (char a_abbr, char a_pass, cchar a_name [LEN_HUND], cchar a_owner [LEN_TERSE], cchar a_group [LEN_TERSE], cchar a_perms [LEN_TERSE])   <* 
- *> {                                                                                                                                                         <* 
- *>    /+---(locals)-----------+-----+-----+-+/                                                                                                               <* 
- *>    char        rce         =  -10;                                                                                                                        <* 
- *>    char        rc          =    0;                                                                                                                        <* 
- *>    char        x_pos       =    0;                                                                                                                        <* 
- *>    char        x_twaddle   =  '-';                                                                                                                        <* 
- *>    char        x_save      =  '-';                                                                                                                        <* 
- *>    /+---(print header)-------------------+/                                                                                                               <* 
- *>    DEBUG_CONF   yLOG_enter   (__FUNCTION__);                                                                                                              <* 
- *>    /+---(defense)------------------------+/                                                                                                               <* 
- *>    DEBUG_PROG   yLOG_char    ("a_abbr"    , a_abbr);                                                                                                      <* 
- *>    --rce;  if (a_abbr != TYPE_FILE) {                                                                                                                     <* 
- *>       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);                                                                                                      <* 
- *>       return rce;                                                                                                                                         <* 
- *>    }                                                                                                                                                      <* 
- *>    /+---(prepare)------------------------+/                                                                                                               <* 
- *>    DEBUG_CONF   yLOG_value   ("a_pass"    , a_pass);                                                                                                      <* 
- *>    --rce;  switch (a_pass) {                                                                                                                              <* 
- *>    case  1 :  x_pos =  3;  break;                                                                                                                         <* 
- *>    case  2 :  x_pos = 33;  break;                                                                                                                         <* 
- *>    default :                                                                                                                                              <* 
- *>               DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);                                                                                              <* 
- *>               return rce;                                                                                                                                 <* 
- *>               break;                                                                                                                                      <* 
- *>    }                                                                                                                                                      <* 
- *>    /+---(name)---------------------------+/                                                                                                               <* 
- *>    rc = CHECK__name  (++x_pos, a_name);                                                                                                                   <* 
- *>    DEBUG_CONF   yLOG_value   ("name"      , rc);                                                                                                          <* 
- *>    /+---(attributes)---------------------+/                                                                                                               <* 
- *>    if (rc >= 0) {                                                                                                                                         <* 
- *>       rc = CHECK__exist (++x_pos, a_name);                                                                                                                <* 
- *>       DEBUG_CONF   yLOG_value   ("exist"     , rc);                                                                                                       <* 
- *>       rc = CHECK__type  (++x_pos, a_abbr);                                                                                                                <* 
- *>       DEBUG_CONF   yLOG_value   ("type"      , rc);                                                                                                       <* 
- *>       x_save = g_check [x_pos];                                                                                                                           <* 
- *>       rc = CHECK__owner (++x_pos, a_owner);                                                                                                               <* 
- *>       DEBUG_CONF   yLOG_value   ("owner"     , rc);                                                                                                       <* 
- *>       rc = CHECK__group (++x_pos, a_group);                                                                                                               <* 
- *>       DEBUG_CONF   yLOG_value   ("group"     , rc);                                                                                                       <* 
- *>       rc = CHECK__perms (++x_pos, a_perms);                                                                                                               <* 
- *>       DEBUG_CONF   yLOG_value   ("perms"     , rc);                                                                                                       <* 
- *>    } else {                                                                                                                                               <* 
- *>       x_twaddle = 'y';                                                                                                                                    <* 
- *>    }                                                                                                                                                      <* 
- *>    /+---(passing)------------------------+/                                                                                                               <* 
- *>    if (a_pass == 1)  x_pos = 15;                                                                                                                          <* 
- *>    else              x_pos = 45;                                                                                                                          <* 
- *>    if (strncmp (g_check + 4, "terogp····", LEN_TERSE) == 0)  g_check [x_pos] = 'y';                                                                       <* 
- *>    else if (x_twaddle == 'y')                                g_check [x_pos] = 'F';                                                                       <* 
- *>    else if (my.exists != 'y')                                g_check [x_pos] = ' ';                                                                       <* 
- *>    else if (x_save    != 'r')                                g_check [x_pos] = '!';                                                                       <* 
- *>    else                                                      g_check [x_pos] = '-';                                                                       <* 
- *>    /+---(big trouble)--------------------+/                                                                                                               <* 
- *>    --rce;  if (x_twaddle == 'y') {                                                                                                                        <* 
- *>       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);                                                                                                      <* 
- *>       return rce;                                                                                                                                         <* 
- *>    }                                                                                                                                                      <* 
- *>    /+---(complete)-----------------------+/                                                                                                               <* 
- *>    DEBUG_CONF   yLOG_exit    (__FUNCTION__);                                                                                                              <* 
- *>    return 0;                                                                                                                                              <* 
- *> }                                                                                                                                                         <*/
-
 char
 CHECK__driver      (char a_abbr, char a_pass, cchar a_name [LEN_HUND], cchar a_owner [LEN_TERSE], cchar a_group [LEN_TERSE], cchar a_perms [LEN_TERSE], char a_type, cchar a_source [LEN_HUND])
 {
@@ -957,6 +836,12 @@ CHECK__driver      (char a_abbr, char a_pass, cchar a_name [LEN_HUND], cchar a_o
    char        x_actual    [LEN_LABEL] = "";
    /*---(print header)-------------------*/
    DEBUG_CONF   yLOG_enter   (__FUNCTION__);
+   /*---(quick-out)----------------------*/
+   DEBUG_PROG   yLOG_char    ("run_mode"  , my.run_mode);
+   if (a_pass == 2 && my.run_mode != RUN_FULL) {
+      DEBUG_CONF   yLOG_exit    (__FUNCTION__);
+      return 0;
+   }
    /*---(prepare)------------------------*/
    CHECK_clear   ();
    /*---(defense)------------------------*/
@@ -989,38 +874,41 @@ CHECK__driver      (char a_abbr, char a_pass, cchar a_name [LEN_HUND], cchar a_o
       DEBUG_CONF   yLOG_value   ("type"      , rc);
       x_save = g_check [n];
       if (x_save == 'r')  x_save = 'f';
-      /*---(non-symbolic)----------------*/
-      if (a_abbr != 's') {
-         rc = CHECK__owner (++n, a_owner);
-         DEBUG_CONF   yLOG_value   ("owner"     , rc);
-         rc = CHECK__group (++n, a_group);
-         DEBUG_CONF   yLOG_value   ("group"     , rc);
-         rc = CHECK__perms (++n, a_perms);
-         DEBUG_CONF   yLOG_value   ("perms"     , rc);
-      }
-      /*---(symbolic)-------------------*/
-      if (a_abbr == 's') {
-         g_check [++n] = '´';
-         rc = CHECK__name  (++n, a_source);
-         DEBUG_CONF   yLOG_value   ("name"      , rc);
-         if (rc >= 0) {
-            rc = CHECK__exist (++n, a_source);
-            DEBUG_CONF   yLOG_value   ("exist"     , rc);
-            if (rc <  0)  x_nosource = 'y';
-            rc = CHECK__type  (++n, a_type);
-            DEBUG_CONF   yLOG_value   ("type"      , rc);
-            x_type = g_check [n];
-            rc = CHECK__link  (++n, x_pos + 2, a_name, a_source);
-            DEBUG_CONF   yLOG_value   ("link"      , rc);
-         } else {
-            x_twaddle = 'y';
+      /*---(additions)-------------------*/
+      if (my.act != ACT_DEL) {
+         /*---(non-symbolic)-------------*/
+         if (a_abbr != 's') {
+            rc = CHECK__owner (++n, a_owner);
+            DEBUG_CONF   yLOG_value   ("owner"     , rc);
+            rc = CHECK__group (++n, a_group);
+            DEBUG_CONF   yLOG_value   ("group"     , rc);
+            rc = CHECK__perms (++n, a_perms);
+            DEBUG_CONF   yLOG_value   ("perms"     , rc);
          }
-      }
-      /*---(devices)--------------------*/
-      if (strchr ("bc", a_abbr) != NULL) {
-         g_check [++n] = '´';
-         rc = CHECK__nodes (++n, a_source);
-         DEBUG_CONF   yLOG_value   ("perms"     , rc);
+         /*---(symbolic)----------------*/
+         if (a_abbr == 's') {
+            g_check [++n] = '´';
+            rc = CHECK__name  (++n, a_source);
+            DEBUG_CONF   yLOG_value   ("name"      , rc);
+            if (rc >= 0) {
+               rc = CHECK__exist (++n, a_source);
+               DEBUG_CONF   yLOG_value   ("exist"     , rc);
+               if (rc <  0)  x_nosource = 'y';
+               rc = CHECK__type  (++n, a_type);
+               DEBUG_CONF   yLOG_value   ("type"      , rc);
+               x_type = g_check [n];
+               rc = CHECK__link  (++n, x_pos + 2, a_name, a_source);
+               DEBUG_CONF   yLOG_value   ("link"      , rc);
+            } else {
+               x_twaddle = 'y';
+            }
+         }
+         /*---(devices)-----------------*/
+         if (strchr ("bc", a_abbr) != NULL) {
+            g_check [++n] = '´';
+            rc = CHECK__nodes (++n, a_source);
+            DEBUG_CONF   yLOG_value   ("perms"     , rc);
+         }
       }
       /*---(done)-----------------------*/
    } else {
@@ -1030,16 +918,22 @@ CHECK__driver      (char a_abbr, char a_pass, cchar a_name [LEN_HUND], cchar a_o
    x_temp = a_abbr;
    if (x_temp == 'f')  x_temp = 'r';
    if (a_type == 'f')  a_type = 'r';
-   if      (a_abbr == 's') {
-      sprintf (x_key, "nes´ne%cl··", a_type);
-      sprintf (x_2nd, "n--´ne%c-··", a_type);
+   if (my.act != ACT_DEL) {
+      if (a_abbr == 's') {
+         sprintf (x_key, "nes´ne%cl··", a_type);
+         sprintf (x_2nd, "n--´ne%c-··", a_type);
+      }
+      else if (strchr ("bc", a_abbr) != NULL)  sprintf (x_key, "ne%cogp´jn·", x_temp);
+      else                                     sprintf (x_key, "ne%cogp····", x_temp);
+   } else {
+      sprintf (x_key, "ne%c·······", a_abbr);
+      sprintf (x_2nd, "n--·······");
    }
-   else if (strchr ("bc", a_abbr) != NULL)  sprintf (x_key, "ne%cogp´jn·", x_temp);
-   else                                     sprintf (x_key, "ne%cogp····", x_temp);
    DEBUG_CONF   yLOG_info    ("x_key"     , x_key);
+   DEBUG_CONF   yLOG_info    ("x_2nd"     , x_2nd);
    ++x_pos;
    /*---(judge)--------------------------*/
-   strlcpy (x_actual, g_check + x_pos, 11);
+   ystrlcpy (x_actual, g_check + x_pos, 11);
    if      (strncmp (x_actual, x_key, LEN_TERSE) == 0)  g_check [x_sum] = 'y';
    else if (strncmp (x_actual, x_2nd, LEN_TERSE) == 0)  g_check [x_sum] = ' ';
    else if (strchr  (x_actual, '£') != NULL)            g_check [x_sum] = '°';
@@ -1059,6 +953,18 @@ CHECK__driver      (char a_abbr, char a_pass, cchar a_name [LEN_HUND], cchar a_o
    --rce;  if (x_nosource == 'y') {
       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);
       return rce;
+   }
+   /*---(final update)-------------------*/
+   if (a_pass == 2) {
+      g_check [END_FINAL] = '-';
+      if (my.act != ACT_DEL) {
+         switch (g_check [x_sum]) {
+         case 'y' :   g_check [END_FINAL] = 'Y';  break;
+         case '°' :   g_check [END_FINAL] = '°';  break;
+         }
+      } else {
+         if (g_check [x_sum] == ' ')   g_check [END_FINAL] = 'Y';
+      }
    }
    /*---(complete)-----------------------*/
    DEBUG_CONF   yLOG_exit    (__FUNCTION__);
@@ -1423,7 +1329,7 @@ CHECK_block        (char a_pass, cchar a_name [LEN_HUND], cchar a_owner [LEN_TER
                                      *>       DEBUG_PROG   yLOG_exitr   (__FUNCTION__, rce);                                                                              <* 
                                      *>       return rce;                                                                                                                 <* 
                                      *>    }                                                                                                                              <* 
-                                     *>    strlcpy (x_temp, a_source, LEN_STR);                                                                                           <* 
+                                     *>    ystrlcpy (x_temp, a_source, LEN_STR);                                                                                           <* 
                                     *>    p = strtok_r (x_temp, q, &r);                                                                                                  <* 
                                     *>    --rce;  if (p == NULL) {                                                                                                       <* 
                                        *>       RPTG_FULL   fprintf (my.file_full, "major ---, minor --- : ");                                                              <* 
@@ -1556,7 +1462,7 @@ char*            /* [------] unit test accessor ------------------------------*/
 CHECK__unit             (char *a_question, int a_num)
 {
    /*---(prepare)------------------------*/
-   strlcpy  (unit_answer, "CONF_unit        : question not understood", LEN_UNIT);
+   ystrlcpy  (unit_answer, "CONF_unit        : question not understood", LEN_UNIT);
    /*---(fields)-------------------------*/
    if      (strncmp (a_question, "check"          , 20)   == 0) {
       snprintf (unit_answer, LEN_UNIT, "CHECK check      : å%sæ", g_check);
